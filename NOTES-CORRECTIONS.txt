@@ -1,0 +1,65 @@
+ETS N'GUILLA & FRERES — Notes de correction
+
+Version de travail issue de l'archive originale.
+
+Corrections apportées au code :
+- Validation des quantités, des prix, des remises et des acomptes dans les deux parcours de vente.
+- Refus d'une vente à crédit sans client sélectionné.
+- Contrôle du stock disponible juste avant validation d'une vente standard ou POS.
+- Enregistrement du coût d'achat dans les lignes de vente nouvelles pour stabiliser les marges historiques lorsque le prix d'achat du produit change ensuite.
+- Amélioration du calcul de la marge du rapport : prise en compte du montant de vente après remise et déduction des retours traités.
+- Affichage de la marge en pourcentage du prix de vente dans le tableau des marges (marge commerciale, et non taux de majoration du coût).
+- Contrôle de la quantité retournable en cumulant les retours déjà enregistrés ; stockage de l'identifiant du produit sur les nouveaux retours.
+- Blocage du traitement d'un retour déjà traité et recherche du produit par identifiant lors de la réintégration.
+- Refus des sorties/pertes manuelles qui dépassent le stock disponible.
+- Confirmation plus explicite avant suppression d'un mouvement, car cette suppression ne recalcule pas le stock.
+- Une valeur de stock minimum égale à zéro est maintenant conservée lors de l'enregistrement d'un produit.
+- Échappement de champs dynamiques dans le ticket POS.
+
+Limites connues non résolues dans cette version :
+- Le module d’inventaire permet maintenant un comptage physique et l’enregistrement local des écarts/ajustements. L’historique des sessions reste local au navigateur et n’est pas encore synchronisé dans une collection cloud dédiée.
+- Les commandes fournisseurs ne possèdent toujours pas de lignes détaillées ni de réception stock intégrée.
+- Les anciennes ventes ne possèdent pas de coût d'achat historique ; pour elles, le rapport utilise encore le coût d'achat actuel du produit comme solution de repli.
+- Les règles de sécurité côté base de données, l'idempotence serveur, les conflits multi-utilisateurs et la synchronisation réelle doivent être vérifiés dans l'environnement connecté.
+- Les calculs de retour déduisent le montant remboursé de la marge, mais un traitement comptable complet des retours (coût des marchandises retournées, avoirs, remboursements partiels) demande un modèle comptable dédié.
+
+Vérifications réalisées :
+- Vérification de syntaxe JavaScript avec Node.js sur les deux scripts intégrés : réussie.
+- Vérification statique des identifiants HTML : 313 identifiants, aucun doublon.
+- Aucun test navigateur, test de bout en bout, test Firebase/Supabase ou test multi-utilisateur n'a été exécuté ici.
+
+Avant usage en production : sauvegarder les données, tester sur une copie, puis vérifier ventes comptant/crédit, remise, stock nul, retours partiels/répétés, rapports et synchronisation cloud.
+
+Audit complémentaire (version style élégant) :
+- Dossier scripts/ supprimé : copies obsolètes (script7.js sans les corrections de stock/min) non référencées par index.html ; le code actif est intégré dans index.html.
+- Feuille de style habatech-clean-readable déplacée à l'intérieur du <body> (elle était après </html>, HTML invalide).
+- Échappement (esc) ajouté sur ref, fournisseur, client, motif et tel dans les tableaux (risque d'injection HTML).
+- sw.js : service worker réel (réseau d'abord, cache en secours, Firebase non intercepté) et enregistré dans index.html ; incrémenter VERSION dans sw.js à chaque livraison.
+- Comptes démo (admin123, etc.) limités à localhost : OK. Mode cloud : vérifier les règles Firestore avant production.
+
+Correctif rafraîchissement (F5) :
+- Avant : après F5, retour à l'écran de connexion puis au Dashboard (la dernière page était sauvegardée mais jamais relue).
+- Maintenant : la session est gardée dans sessionStorage (onglet courant uniquement, expire après 15 min d'inactivité, effacée à la déconnexion) et la dernière page ouverte est restaurée.
+- sw.js passé en ets-nguilla-v2 pour forcer la mise à jour du cache.
+
+Firebase : configuration du projet mpdv-nguila intégrée par défaut (DEFAULT_FB_CONFIG). Elle est utilisée si aucune configuration n'est enregistrée dans le navigateur ; elle peut toujours être remplacée dans Administration. sw.js passé en v3.
+
+
+MISE À JOUR — LIMITE DES PHOTOS PRODUITS
+- Les images de produit de plus de 1 Mo sont refusées avant lecture et enregistrement.
+- Le formulaire affiche explicitement la limite de 1 Mo par photo.
+- Le cache du service worker est versionné pour forcer le chargement de la nouvelle version.
+
+
+MISE À JOUR — LIENS RAPIDES GLOBAUX
+- Ajout d’un panneau « Accès rapides » disponible depuis toutes les pages.
+- Raccourcis vers les modules principaux, dont Fournisseurs, Produits, Ventes, Commandes, Clients, Rapports et Administration.
+- Actions directes : nouveau produit, nouvelle vente, nouveau mouvement et point de vente.
+- Cache du service worker versionné pour charger cette mise à jour.
+
+
+MISE À JOUR — PHOTOS COMPRESSÉES ET INTÉGRÉES AU HTML
+- Logos, icône de notification et six photos de produits intégrés directement dans index.html en Data URI Base64.
+- Photos de produits redimensionnées si nécessaire et recompressées en JPEG optimisé.
+- Les images produits intégrées ne nécessitent plus de fichiers séparés dans le dossier products.
+- Le cache PWA a été versionné pour charger la nouvelle version.
