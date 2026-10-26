@@ -1879,7 +1879,13 @@ addEventListener('pagehide',()=>{_dirty.forEach(enqueueDiff);_dirty.clear();save
 setInterval(()=>{if(ACCESS_MODE==='cloud'&&sb)flushOutbox();},30000);setInterval(syncBadge,5000);
 /*END-SYNC-ENGINE-V2*/
 function setDemo(e,p){document.getElementById('l-email').value=e;document.getElementById('l-pass').value=p;}
-async function doLogin(){try{const em=document.getElementById('l-email').value.trim(),pw=document.getElementById('l-pass').value;if(!em||!pw){toast('Remplissez tous les champs','error');return;}if(ACCESS_MODE==='cloud'){try{if(!sb){if(!firebaseReady())throw new Error('Configurez Firebase pour le mode Cloud.');initFirebase();}showSync('Authentification Firebase…','');const{data,error}=await sb.auth.signInWithPassword({email:em,password:pw});if(error)throw error;const pr=await sb.from('utilisateurs').select('*').eq('email',em).single();CU=pr.data||{nom:em,role:'caissier',email:em};if((CU.statut||'actif')==='inactif'){await sb.auth.signOut();CU=null;hideSync();toast('Compte désactivé : contactez un administrateur','error');return;}await syncFromCloud();hideSync();afterLogin();return;}catch(e){hideSync();toast('Erreur cloud : '+e.message,'error');return;}}const d=ALLOW_DEMO?DEMOS.find(u=>u.email===em&&u.pass===pw):null;if(d){CU=d;afterLogin();return;}toast('Identifiants incorrects','error');}catch(e){toast('Erreur : '+e.message,'error');}}
+async function doLogin(){try{const em=document.getElementById('l-email').value.trim(),pw=document.getElementById('l-pass').value;if(!em||!pw){toast('Remplissez tous les champs','error');return;}if(ACCESS_MODE==='cloud'){try{if(!sb){if(!firebaseReady())throw new Error('Configurez Firebase pour le mode Cloud.');initFirebase();}showSync('Authentification Firebase…','');const{data,error}=await sb.auth.signInWithPassword({email:em,password:pw});if(error)throw error;let _boot=false;{const _uid=data.user.uid,_mb=await firestoreDB.collection('members').doc(_uid).get();
+if(!_mb.exists){const _bs=await firestoreDB.collection('config').doc('bootstrap').get();
+if(_bs.exists){await sb.auth.signOut();hideSync();toast('Compte non autorisé : demandez à un administrateur de vous créer','error');return;}
+hideSync();if(!confirm('Aucun administrateur n\'est encore défini.\nDevenir administrateur de ce système avec '+em+' ?')){await sb.auth.signOut();return;}
+showSync('Création du premier administrateur…','');const _b=firestoreDB.batch();const _d=firestoreDB.collection.bind(firestoreDB);
+_b.set(_d('config').doc('bootstrap'),{uid:_uid,email:em,at:new Date().toISOString()});_b.set(_d('admins').doc(_uid),{email:em});_b.set(_d('members').doc(_uid),{email:em});await _b.commit();_boot=true;}}
+const pr=await sb.from('utilisateurs').select('*').eq('email',em).single();CU=pr.data||(_boot?{nom:em.split('@')[0],role:'admin',email:em,uid:firebaseAuth.currentUser.uid,statut:'actif'}:{nom:em,role:'caissier',email:em});if((CU.statut||'actif')==='inactif'){await sb.auth.signOut();CU=null;hideSync();toast('Compte désactivé : contactez un administrateur','error');return;}await syncFromCloud();if(_boot&&!D.utilisateurs.some(u=>String(u.email||'').toLowerCase()===em.toLowerCase())){D.utilisateurs.push({id:nid('utilisateurs'),nom:CU.nom,email:em,role:'admin',statut:'actif',uid:CU.uid});sv('db_u','utilisateurs');try{syncSoon('utilisateurs');}catch(_){}}hideSync();afterLogin();return;}catch(e){hideSync();toast('Erreur cloud : '+e.message,'error');return;}}const d=ALLOW_DEMO?DEMOS.find(u=>u.email===em&&u.pass===pw):null;if(d){CU=d;afterLogin();return;}toast('Identifiants incorrects','error');}catch(e){toast('Erreur : '+e.message,'error');}}
 let _sessT=0;
 function saveSess(force){if(!CU)return;const n=Date.now();if(!force&&n-_sessT<5000)return;_sessT=n;try{sessionStorage.setItem('ets_sess',JSON.stringify({u:CU,t:n}));}catch(e){}}
 function restoreSession(){
@@ -2868,6 +2874,7 @@ async function saveUser(){
       const c=await sec.auth().createUserWithEmailAndPassword(em,pw);
       rec.uid=c.user.uid;
       await sec.auth().signOut();
+      await firestoreDB.collection('members').doc(rec.uid).set({email:em,nom});
       if(role==='admin')await firestoreDB.collection('admins').doc(rec.uid).set({email:em,nom});
     }catch(e){
       hideSync();
@@ -2927,8 +2934,8 @@ async function userToggle(id){
     if(_cloudOn()){
       if(!u.uid){toast('Compte sans UID : recréez cet utilisateur pour pouvoir le désactiver','error');return;}
       showSync(off?'Réactivation…':'Désactivation…','');
-      if(off){await firestoreDB.collection('disabled').doc(u.uid).delete();if(u.role==='admin')await firestoreDB.collection('admins').doc(u.uid).set({email:u.email,nom:u.nom});}
-      else{await firestoreDB.collection('disabled').doc(u.uid).set({email:u.email,at:new Date().toISOString()});await firestoreDB.collection('admins').doc(u.uid).delete();}
+      if(off){await firestoreDB.collection('members').doc(u.uid).set({email:u.email,nom:u.nom});if(u.role==='admin')await firestoreDB.collection('admins').doc(u.uid).set({email:u.email,nom:u.nom});}
+      else{await firestoreDB.collection('members').doc(u.uid).delete();await firestoreDB.collection('admins').doc(u.uid).delete();}
       hideSync();
     }
     u.statut=off?'actif':'inactif';_saveUsers();toast(off?'Compte réactivé':'Compte désactivé (accès Firestore bloqué)','success');

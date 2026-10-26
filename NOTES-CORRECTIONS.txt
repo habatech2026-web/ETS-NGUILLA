@@ -95,3 +95,9 @@ MISE À JOUR — LIENS RAPIDES
 - Panneau « ⚡ Accès rapides » de la barre du haut : ajout de « Nouveau client » et « Nouvelle dépense ».
 
 SRI : exécuter une fois avec Internet « python3 sri.py index.html » (ajoute integrity + crossorigin aux 7 scripts CDN, versions figées). Refaire après tout changement de version de librairie.
+
+MISE À JOUR — AMORÇAGE DU PREMIER ADMIN + ACCÈS PAR « MEMBRES »
+- Plus de saisie manuelle dans Firestore : créez UN compte dans Firebase Authentication (email + mot de passe fort), publiez firestore.rules, puis connectez-vous à l'app. Si aucun admin n'existe, l'app propose « Devenir administrateur » ; elle crée atomiquement config/bootstrap, admins/{uid}, members/{uid} et votre profil (rôle admin). Opération possible une seule fois.
+- Accès Firestore réservé aux comptes présents dans members/{uid} : une personne qui s'inscrirait via l'API Firebase sans être créée par un admin n'a aucun accès aux données. Désactiver un utilisateur retire son document members ; réactiver le recrée.
+- Collection « disabled » abandonnée. Les comptes créés avec une version précédente n'ont pas de document members : les recréer depuis l'écran Utilisateurs.
+- Ne désactivez PAS l'inscription publique de Firebase Auth : l'écran Utilisateurs en dépend pour créer les comptes. La protection vient du modèle « members » (un compte non listé n'accède à aucune donnée).
