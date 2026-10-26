@@ -1,7 +1,6 @@
 /* ETS N'GUILLA & FRÈRES — service worker (réseau d'abord, cache en secours) */
-const VERSION = 'ets-nguilla-v6-images-html';
-const CORE = ['./', './index.html', './manifest.webmanifest', './icon-192.png', './icon-512.png', './logo-1.png', './logo-2.png',
-  './products/product-1.jpg', './products/product-2.jpg', './products/product-3.jpg', './products/product-4.jpg', './products/product-5.jpg', './products/product-6.jpg'];
+const VERSION = 'ets-nguilla-v7-audit';
+const CORE = ['./', './index.html', './manifest.webmanifest', './icon-192.png', './icon-512.png', './icon-maskable-192.png', './icon-maskable-512.png'];
 // APIs temps réel : jamais interceptées
 const BYPASS = ['firestore.googleapis.com', 'identitytoolkit.googleapis.com', 'securetoken.googleapis.com', 'firebaseinstallations.googleapis.com'];
 

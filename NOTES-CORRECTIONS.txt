@@ -63,3 +63,35 @@ MISE À JOUR — PHOTOS COMPRESSÉES ET INTÉGRÉES AU HTML
 - Photos de produits redimensionnées si nécessaire et recompressées en JPEG optimisé.
 - Les images produits intégrées ne nécessitent plus de fichiers séparés dans le dossier products.
 - Le cache PWA a été versionné pour charger la nouvelle version.
+
+
+MISE À JOUR — AUDIT DE SÉCURITÉ ET PWA (sw.js v7-audit)
+- esc() appliqué à ~22 interpolations innerHTML supplémentaires (toast, top produits, champs texte) : réduction du risque XSS.
+- Content-Security-Policy ajoutée (meta) : scripts limités à self + jsDelivr, cdnjs, gstatic ; connexions limitées à Firebase et api.anthropic.com. À tester une fois en ligne (console du navigateur).
+- sw.js : CORE nettoyé (fichiers logo-*/products/* inexistants retirés).
+- manifest : icônes "any" et "maskable" séparées ; ajout de icon-maskable-192/512.png.
+- 24 photos distantes (sites tiers) retirées du catalogue de démonstration alimentaire : plus de dépendance externe ni de rupture hors ligne.
+- Clé API IA : enregistrement réservé au rôle admin.
+- firestore.rules fourni : lecture/écriture authentifiée, suppression et gestion des utilisateurs réservées aux admins (collection "admins" à créer, ID = UID Auth).
+
+Restant à faire : intégrité SRI des scripts CDN (hashes à calculer en ligne), création réelle des comptes Firebase Auth depuis l'écran Utilisateurs, limites métier listées plus haut.
+
+MISE À JOUR — CRÉATION DES COMPTES (écran Utilisateurs)
+- Mode cloud : « Enregistrer » crée le vrai compte Firebase Auth (email + mot de passe, 6 caractères min.) via une 2e instance Firebase, sans déconnecter l'admin, puis enregistre le profil (rôle, uid) dans « utilisateurs ». Un rôle admin crée aussi admins/{uid}.
+- Réservé aux administrateurs ; doublons d'email refusés ; messages d'erreur explicites.
+- Prérequis : activer « E-mail/Mot de passe » dans Firebase Authentication et publier firestore.rules. Créer à la main dans la console le PREMIER document admins/{UID}.
+- Mode local : comportement inchangé (profil local uniquement).
+
+MISE À JOUR — GESTION DES UTILISATEURS DANS L'APP
+- ✏️ Changer le rôle (met à jour admins/{uid}) ; 🔑 envoyer un lien de réinitialisation par email ; ⛔/✅ désactiver / réactiver (écrit disabled/{uid} : les règles Firestore coupent tout accès, et la connexion est refusée) ; « Mon mot de passe » pour changer le sien.
+- Garde-fous : on ne peut ni se rétrograder, ni se désactiver, ni retirer le dernier admin actif.
+- Limite technique : un navigateur ne peut pas supprimer un compte Firebase Auth ni fixer le mot de passe d'un autre utilisateur (réservé au SDK Admin / Cloud Functions). La désactivation + le lien de réinitialisation couvrent ces besoins.
+- Les utilisateurs créés avant cette version n'ont pas d'UID : les recréer pour activer rôle/désactivation côté Firestore.
+- firestore.rules à republier (ajout de la collection disabled).
+
+MISE À JOUR — LIENS RAPIDES
+- Dashboard : barre de raccourcis (POS, vente, mouvement, produit, client, dépense, commande, retour, alertes, facturation, inventaire, crédits, rapports), personnalisable via « ⭐ Personnaliser » (mémorisé sur l'appareil).
+- KPI du dashboard cliquables (produits, valeur stock → Produits ; alertes, ruptures → Alertes).
+- Panneau « ⚡ Accès rapides » de la barre du haut : ajout de « Nouveau client » et « Nouvelle dépense ».
+
+SRI : exécuter une fois avec Internet « python3 sri.py index.html » (ajoute integrity + crossorigin aux 7 scripts CDN, versions figées). Refaire après tout changement de version de librairie.
