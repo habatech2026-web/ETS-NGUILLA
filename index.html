@@ -823,6 +823,132 @@ body.light-mode input,body.light-mode select,body.light-mode textarea{background
 @media(max-width:380px){.quick-links-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 
 </style>
+
+<style id="ets-theme-clair-fix">
+/* Thème clair harmonisé : fonds propres, textes contrastés, champs lisibles */
+body.light-mode{
+  --bg:#F4F7FB;--bg2:#FFFFFF;--bg3:#EEF3F8;
+  --border:#D8E1EC;--border2:#C3CFDD;
+  --text:#172033;--text2:#46566D;--text3:#65758B;
+  --blue:#2563EB;--blue2:#1D4ED8;--blue-glow:rgba(37,99,235,.12);
+  --green:#15803D;--green-glow:rgba(21,128,61,.12);
+  --red:#B91C1C;--red-glow:rgba(185,28,28,.10);
+  --orange:#B45309;--orange-glow:rgba(180,83,9,.12);
+  --purple:#6D28D9;--purple-glow:rgba(109,40,217,.12);
+  --accent:#0369A1;
+}
+body.light-mode{background:var(--bg);color:var(--text)}
+body.light-mode #sidebar,body.light-mode .topbar,
+body.light-mode .card,body.light-mode .kpi,
+body.light-mode .hpanel,body.light-mode .mcard,
+body.light-mode .login-card,body.light-mode .modal,
+body.light-mode .dropdown-menu,body.light-mode .stat-card{
+  background-color:var(--bg2);color:var(--text);border-color:var(--border);
+  box-shadow:0 4px 16px rgba(15,23,42,.045)
+}
+body.light-mode .nav-item{color:var(--text2)}
+body.light-mode .nav-item:hover,body.light-mode .nav-item.active{
+  background:#E7F0FF;color:#1D4ED8
+}
+body.light-mode input,body.light-mode select,body.light-mode textarea{
+  background:#FFFFFF!important;color:#172033!important;border-color:#C8D3E0!important
+}
+body.light-mode input::placeholder,body.light-mode textarea::placeholder{color:#738198!important;opacity:1}
+body.light-mode table th{background:#EAF0F7!important;color:#334155!important}
+body.light-mode table td{color:#273449;border-color:#E1E7EF}
+body.light-mode table tr:nth-child(even) td{background:#F8FAFD}
+body.light-mode .muted,body.light-mode .text-muted{color:#64748B!important}
+body.light-mode .badge,body.light-mode .pill{font-weight:600}
+body.light-mode .btn-secondary,body.light-mode .tbtn{
+  background:#EEF3F8;color:#26364B;border-color:#D5DFEA
+}
+body.light-mode .overlay{background:rgba(15,23,42,.45)}
+body.light-mode .modal{border:1px solid #D8E1EC}
+body.light-mode .section-title,body.light-mode h1,body.light-mode h2,
+body.light-mode h3,body.light-mode h4{color:#172033}
+body.light-mode .mcard{border:1px solid #DCE4EE}
+body.light-mode .mcard:hover,body.light-mode .card:hover{border-color:#B9CBE0}
+body.light-mode .pagination button{background:#fff;color:#334155;border-color:#D8E1EC}
+body.light-mode ::selection{background:#BFDBFE;color:#172033}
+</style>
+
+
+<style id="ets-product-detail-layout-fix">
+/* Fiche produit : photo à gauche, détails et actions à droite sur desktop */
+@media (min-width: 900px){
+  #s-produits .mob-cards .mcard{display:grid!important;grid-template-columns:minmax(280px,38%) minmax(0,1fr);column-gap:22px;align-items:start;padding:18px 20px;}
+  #s-produits .mob-cards .mcard .mcard-product-photo{grid-column:1;grid-row:1 / span 20;width:100%;height:100%;min-height:360px;max-height:520px;margin:0;align-self:stretch;background:var(--bg2);}
+  #s-produits .mob-cards .mcard .mcard-top,
+  #s-produits .mob-cards .mcard .mcard-row,
+  #s-produits .mob-cards .mcard .mcard-sbar,
+  #s-produits .mob-cards .mcard .mcard-actions,
+  #s-produits .mob-cards .mcard .mcard-title,
+  #s-produits .mob-cards .mcard .mcard-sub{grid-column:2;min-width:0;}
+  #s-produits .mob-cards .mcard .mcard-actions{display:flex;justify-content:flex-end;flex-wrap:wrap;gap:8px;margin-top:14px;}
+  #s-produits .mob-cards .mcard .mcard-actions .btn{min-width:94px;}
+}
+@media (min-width:769px) and (max-width:899px){
+  #s-produits .mob-cards .mcard .mcard-product-photo{height:300px;}
+}
+@media (max-width:768px){
+  #s-produits .mob-cards .mcard{display:block!important;}
+  #s-produits .mob-cards .mcard .mcard-product-photo{width:100%;height:220px;min-height:0;margin:0 0 12px;}
+  #s-produits .mob-cards .mcard .mcard-actions{display:flex;flex-wrap:wrap;gap:8px;}
+}
+</style>
+
+
+<style id="ets-product-card-polish">
+/* Interface catalogue professionnelle : photo à gauche, détails/actions à droite */
+@media (min-width:900px){
+  #s-produits #mc-prod{display:flex!important;flex-direction:column;gap:16px}
+  #s-produits #mc-prod>.mcard{
+    display:grid!important;
+    grid-template-columns:minmax(260px,34%) minmax(0,1fr);
+    grid-template-rows:auto auto auto auto auto auto auto auto;
+    column-gap:24px;row-gap:10px;
+    align-items:center;width:100%;max-width:none;min-width:0;
+    box-sizing:border-box;padding:20px;
+    border:1px solid var(--border);border-left:4px solid var(--mc,var(--blue));
+    border-radius:18px;background:var(--bg2);
+    box-shadow:0 8px 24px rgba(15,23,42,.07);
+    transition:box-shadow .18s ease,transform .18s ease;
+  }
+  #s-produits #mc-prod>.mcard:hover{box-shadow:0 12px 30px rgba(15,23,42,.12);transform:translateY(-1px)}
+  #s-produits #mc-prod>.mcard>.mcard-product-photo{
+    grid-column:1;grid-row:1 / span 8;
+    display:block!important;width:100%;height:360px;max-height:420px;min-height:260px;
+    object-fit:contain;object-position:center;border-radius:13px;
+    background:linear-gradient(145deg,var(--bg3),var(--bg2));
+    border:1px solid var(--border);padding:8px;box-sizing:border-box;
+  }
+  #s-produits #mc-prod>.mcard>.mcard-top{grid-column:2;grid-row:1;align-self:center;padding-bottom:12px;border-bottom:1px solid var(--border)}
+  #s-produits #mc-prod>.mcard>.mcard-top .mcard-title{font-size:23px;line-height:1.3;font-weight:800;letter-spacing:-.3px}
+  #s-produits #mc-prod>.mcard>.mcard-top .mcard-sub{margin-top:7px;font-size:13px}
+  #s-produits #mc-prod>.mcard>.mcard-row{grid-column:2;display:flex;align-items:center;justify-content:space-between;gap:16px;padding:10px 12px;border:1px solid var(--border);border-radius:10px;background:var(--bg3)}
+  #s-produits #mc-prod>.mcard>.mcard-row:nth-of-type(2){grid-row:2}
+  #s-produits #mc-prod>.mcard>.mcard-row:nth-of-type(3){grid-row:3}
+  #s-produits #mc-prod>.mcard>.mcard-row:nth-of-type(5){grid-row:5}
+  #s-produits #mc-prod>.mcard>.mcard-row:nth-of-type(6){grid-row:6}
+  #s-produits #mc-prod>.mcard>.mcard-row .mcard-lbl{font-size:13px;color:var(--text2)}
+  #s-produits #mc-prod>.mcard>.mcard-row .mcard-val{font-weight:750}
+  #s-produits #mc-prod>.mcard>.mcard-sbar{grid-column:2;grid-row:4;width:100%;height:7px;border-radius:99px;overflow:hidden;background:var(--bg3);margin:0!important}
+  #s-produits #mc-prod>.mcard>div[style*="margin:4px 0 8px"]{grid-column:2;grid-row:4;align-self:start;margin:0!important;transform:translateY(-23px);padding:0 2px;pointer-events:none}
+  #s-produits #mc-prod>.mcard>.mcard-actions{grid-column:2;grid-row:8;display:flex;justify-content:flex-end;gap:10px;margin-top:8px;padding-top:14px;border-top:1px solid var(--border)}
+  #s-produits #mc-prod>.mcard>.mcard-actions .btn{min-width:54px;min-height:42px;border-radius:10px}
+}
+@media (min-width:769px) and (max-width:899px){
+ #s-produits #mc-prod>.mcard{display:grid!important;grid-template-columns:minmax(200px,35%) minmax(0,1fr);gap:14px;padding:14px}
+ #s-produits #mc-prod>.mcard>.mcard-product-photo{grid-column:1;grid-row:1 / span 8;width:100%;height:280px;object-fit:contain}
+ #s-produits #mc-prod>.mcard>.mcard-top,#s-produits #mc-prod>.mcard>.mcard-row,#s-produits #mc-prod>.mcard>.mcard-actions{grid-column:2;min-width:0}
+}
+@media (max-width:768px){
+ #s-produits #mc-prod>.mcard{display:block!important;width:100%;box-sizing:border-box}
+ #s-produits #mc-prod>.mcard>.mcard-product-photo{display:block;width:100%;height:220px;object-fit:contain;margin:0 0 12px}
+ #s-produits #mc-prod>.mcard>.mcard-actions{display:flex;justify-content:space-between;gap:8px;margin-top:12px}
+}
+</style>
+
 </head>
 <body>
 
@@ -3385,28 +3511,54 @@ function openBarcode(pid){
   renderQR(p,180);
   openM('m-barcode');
 }
-function renderQR(p,size=180){
+let _qrLibLoading=null;
+function ensureQRCode(){
+  if(typeof QRCode!=='undefined' && typeof QRCode.toCanvas==='function')return Promise.resolve(true);
+  if(_qrLibLoading)return _qrLibLoading;
+  _qrLibLoading=new Promise(resolve=>{
+    const urls=[
+      'https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js',
+      'https://cdnjs.cloudflare.com/ajax/libs/qrcode/1.5.3/qrcode.min.js'
+    ];
+    let i=0;
+    const tryNext=()=>{
+      if(typeof QRCode!=='undefined' && typeof QRCode.toCanvas==='function'){resolve(true);return;}
+      if(i>=urls.length){_qrLibLoading=null;resolve(false);return;}
+      const script=document.createElement('script');script.src=urls[i++];script.onload=()=>resolve(typeof QRCode!=='undefined'&&typeof QRCode.toCanvas==='function');script.onerror=tryNext;document.head.appendChild(script);
+    };
+    tryNext();
+  });
+  return _qrLibLoading;
+}
+async function renderQR(p,size=180){
   if(!p)return;
   const canvas=document.getElementById('bc-canvas');
   const qrData=JSON.stringify({id:p.id,code:p.code,nom:p.designation,prix:p.vente,unite:p.unite||'u'});
-  if(typeof QRCode!=='undefined'){
-    QRCode.toCanvas(canvas,qrData,{width:size,margin:2,color:{dark:'#000000',light:'#ffffff'}},err=>{
-      if(err)console.error(err);
-    });
-  } else {
-    // Fallback si QRCode non chargé
-    const ctx=canvas.getContext('2d');canvas.width=size;canvas.height=size;
-    ctx.fillStyle='#fff';ctx.fillRect(0,0,size,size);
-    ctx.fillStyle='#0F172A';ctx.font='bold 12px monospace';ctx.textAlign='center';
-    ctx.fillText(p.code,size/2,size/2);
+  canvas.width=size;canvas.height=size;
+  const ready=await ensureQRCode();
+  if(ready){
+    try{
+      await QRCode.toCanvas(canvas,qrData,{width:size,margin:3,errorCorrectionLevel:'H',color:{dark:'#000000',light:'#ffffff'}});
+      canvas.style.width=size+'px';canvas.style.height=size+'px';
+    }catch(err){
+      console.error('Échec de génération du QR code',err);
+      const ctx=canvas.getContext('2d');ctx.fillStyle='#fff';ctx.fillRect(0,0,size,size);
+      ctx.fillStyle='#b91c1c';ctx.font='12px sans-serif';ctx.textAlign='center';ctx.fillText('Erreur QR code',size/2,size/2);
+      toast('Impossible de générer le QR code. Vérifiez la connexion Internet.','error');
+    }
+  }else{
+    const ctx=canvas.getContext('2d');ctx.fillStyle='#fff';ctx.fillRect(0,0,size,size);
+    ctx.fillStyle='#b91c1c';ctx.font='12px sans-serif';ctx.textAlign='center';ctx.fillText('QR indisponible',size/2,size/2);
+    toast('Bibliothèque QR indisponible : connectez-vous à Internet puis réouvrez l’étiquette.','error');
   }
   document.getElementById('bc-code').textContent=p.code;
   document.getElementById('bc-name').textContent=p.designation;
   document.getElementById('bc-price').textContent=gnf(p.vente);
   document.getElementById('bc-info').innerHTML=`<b style="color:var(--text)">${esc(p.designation)}</b><br><span style="color:var(--text3)">Code: <code>${esc(p.code)}</code> — Stock: ${p.stock} ${esc(p.unite||'u.')}</span>`;
 }
-function printLabel(){
+async function printLabel(){
   const p=currentQRProd;if(!p)return;
+  await renderQR(p,+(document.getElementById('bc-canvas').width||180));
   const canvas=document.getElementById('bc-canvas');
   const img=canvas.toDataURL('image/png');
   const w=window.open('','_blank','width=320,height=420');
@@ -5062,17 +5214,6 @@ tr:last-child td{border-bottom:0} tbody tr:hover{background:color-mix(in srgb,va
  .btn,.tbtn{padding-inline:9px;font-size:13px}
 }
 @media(min-width:1200px){.g2,.g2eq{gap:18px}.content{max-width:1800px;margin-inline:auto}}
-
-/* Produits : conserver les cartes larges sur ordinateur, comme sur mobile */
-@media (min-width:769px){
-  #s-produits .mob-table{display:block!important;background:transparent;border:0;overflow:visible;margin-bottom:12px}
-  #s-produits .mob-table .tw{display:none!important}
-  #s-produits .mob-table .pagination{display:flex!important}
-  #s-produits .mob-cards{display:flex!important;flex-direction:column;align-items:stretch;gap:14px;width:100%;min-width:0}
-  #s-produits .mob-cards .mcard{display:block;width:100%;max-width:none;box-sizing:border-box}
-  #s-produits .mob-cards .mcard-product-photo{height:clamp(220px,28vw,340px);max-width:100%;object-fit:contain}
-}
-
 </style>
 <script>
 
