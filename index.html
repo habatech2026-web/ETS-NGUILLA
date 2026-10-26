@@ -5062,6 +5062,17 @@ tr:last-child td{border-bottom:0} tbody tr:hover{background:color-mix(in srgb,va
  .btn,.tbtn{padding-inline:9px;font-size:13px}
 }
 @media(min-width:1200px){.g2,.g2eq{gap:18px}.content{max-width:1800px;margin-inline:auto}}
+
+/* Produits : conserver les cartes larges sur ordinateur, comme sur mobile */
+@media (min-width:769px){
+  #s-produits .mob-table{display:block!important;background:transparent;border:0;overflow:visible;margin-bottom:12px}
+  #s-produits .mob-table .tw{display:none!important}
+  #s-produits .mob-table .pagination{display:flex!important}
+  #s-produits .mob-cards{display:flex!important;flex-direction:column;align-items:stretch;gap:14px;width:100%;min-width:0}
+  #s-produits .mob-cards .mcard{display:block;width:100%;max-width:none;box-sizing:border-box}
+  #s-produits .mob-cards .mcard-product-photo{height:clamp(220px,28vw,340px);max-width:100%;object-fit:contain}
+}
+
 </style>
 <script>
 
