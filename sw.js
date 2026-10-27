@@ -1,5 +1,5 @@
 /* ETS N'GUILLA & FRÈRES — service worker (réseau d'abord, cache en secours) */
-const VERSION = 'ets-nguilla-v9-local';
+const VERSION = 'ets-nguilla-v10-doublons';
 const CORE = ['./', './index.html', './manifest.webmanifest', './icon-192.png', './icon-512.png', './icon-maskable-192.png', './icon-maskable-512.png'];
 // APIs temps réel : jamais interceptées
 const BYPASS = ['firestore.googleapis.com', 'identitytoolkit.googleapis.com', 'securetoken.googleapis.com', 'firebaseinstallations.googleapis.com'];

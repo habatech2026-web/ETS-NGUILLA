@@ -101,3 +101,25 @@ MISE À JOUR — AMORÇAGE DU PREMIER ADMIN + ACCÈS PAR « MEMBRES »
 - Accès Firestore réservé aux comptes présents dans members/{uid} : une personne qui s'inscrirait via l'API Firebase sans être créée par un admin n'a aucun accès aux données. Désactiver un utilisateur retire son document members ; réactiver le recrée.
 - Collection « disabled » abandonnée. Les comptes créés avec une version précédente n'ont pas de document members : les recréer depuis l'écran Utilisateurs.
 - Ne désactivez PAS l'inscription publique de Firebase Auth : l'écran Utilisateurs en dépend pour créer les comptes. La protection vient du modèle « members » (un compte non listé n'accède à aucune donnée).
+
+
+MISE À JOUR — AUDIT INTERFACE PRODUITS (sw.js v8-produits)
+- Bug corrigé : la photo était ajoutée au produit APRÈS l'écriture cloud → jamais synchronisée. Elle est maintenant dans l'objet enregistré (local + Firestore).
+- Bug corrigé : « Retirer la photo » sur un produit existant n'avait aucun effet à l'enregistrement.
+- Photos compressées à l'import (max 720 px, JPEG ≤ ~180 Ko) : évite le dépassement de 1 Mio par document Firestore et la saturation de localStorage (~5 Mo). Fichier source accepté jusqu'à 8 Mo.
+- sv() protégé : un dépassement de quota localStorage affiche un message au lieu de planter silencieusement.
+- Restant : SRI non appliqué (python3 sri.py index.html, avec Internet) ; CSS des cartes produits défini en 3 blocs superposés (fragile, à unifier) ; photos embarquées liées aux ids 1–6.
+- Barre du haut : titre de page écrasé et boutons débordants sur écrans < 1500 px corrigés (titre sur une ligne, libellés masqués, barre défilable).
+
+MISE À JOUR — MODE LOCAL (sw.js v9-local)
+- Stockage durable : chaque écriture db_* / file d'attente de synchro / comptes locaux est dupliquée dans IndexedDB (base « ets_local »). Si localStorage est plein ou vidé, les données sont récupérées au démarrage depuis IndexedDB. Un reset volontaire n'est pas annulé (marqueur de suppression). Stockage persistant demandé au navigateur.
+- Sauvegarde/restauration JSON : Administration > « Sauvegarde & stockage local » (+ pastille « 💾 Local » en bas à gauche, rappel si > 7 jours). Le fichier contient les comptes locaux (mots de passe hachés) : à garder confidentiel.
+- Comptes locaux (hors localhost) : premier lancement = création de l'administrateur (mot de passe 8 car. min.). Mots de passe hachés PBKDF2-SHA256 150 000 itérations ; blocage 30 s après 5 échecs ; création d'utilisateur, changement et réinitialisation de mot de passe en mode local. HTTPS requis.
+- Limite : sécurité d'usage seulement. Quelqu'un qui possède l'appareil déverrouillé peut lire les données du navigateur. Mot de passe admin oublié = pas de récupération (restaurer une sauvegarde, ou vider les données du site).
+
+MISE À JOUR — DOUBLONS (sw.js v10-doublons)
+- Audit code : 0 ID HTML en double, 0 fonction/variable redéclarée, 0 écouteur d'événement empilé. CSS : ~120 sélecteurs définis plusieurs fois (cascade OK mais fragile, non modifié).
+- Administration > « Détection des doublons » : ID, codes, désignations, noms, téléphones (8 derniers chiffres), e-mails, slugs, numéros de vente/commande, ventes/mouvements/dépenses identiques à la même minute.
+- Garde-fous : confirmation si un produit, client ou fournisseur similaire existe déjà ; anti double clic sur Produit, Client, Fournisseur, Commande.
+- Code produit : boucle d'unicité (l'ancien suffixe horaire pouvait théoriquement se répéter).
+- Non fait : fusion automatique des doublons (les mouvements et ventes référencent produits/clients ; à faire à la main après lecture du rapport).
