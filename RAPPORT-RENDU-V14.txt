@@ -1,0 +1,11 @@
+ETS N'GUILLA & FRÈRES — V14
+Harmonisation graphique bleu marine et or
+
+Modifications ciblées :
+- Facture PDF : modèle bleu marine, or et blanc déjà intégré dans V13 conservé.
+- Bon de commande PDF : palette harmonisée bleu marine/or.
+- Reçu de vente imprimable : en-tête et total harmonisés bleu marine/or, lignes plus lisibles.
+- Étiquette produit : cadre bleu marine, accent or et prix harmonisé.
+- Cache PWA versionné pour favoriser le chargement des nouveaux fichiers.
+
+À tester dans le navigateur : impression réelle/PDF, contenu des commandes et tickets, affichage mobile. Aucune validation de bout en bout dans navigateur réel n'est revendiquée.

@@ -1,0 +1,29 @@
+ETS N'GUILLA & FRÈRES — V16 (fond desktop) — audit
+
+Contrôles : 5 blocs JS (node --check) OK, sw.js OK, 340 ids HTML.
+Fond : dashboard-bg.webp (1536x1024, 118 Ko) appliqué à #main uniquement ≥1024px, voile clair + cartes semi-transparentes ; désactivé sur mobile (<1024px).
+
+Corrigé :
+- sw.js restait en v15 : les clients gardaient l'ancienne interface en cache. Passé en ets-nguilla-v16-desktop-background.
+- dashboard-bg.webp ajouté au cache de base (CORE) : le fond reste disponible hors ligne.
+- 4 balises <style> partageaient le même id (ets-light-theme-window-fix-v12) : ids rendus uniques (-1 à -4). Aucun changement visuel.
+
+Limites : non testé dans un navigateur réel. background-attachment:fixed + flou des cartes peut ralentir le défilement sur PC modestes : si c'est le cas, retirer backdrop-filter.
+Déploiement : fichier dashboard-bg.webp à pousser avec index.html et sw.js.
+
+V16c — correctif en-tête (capture mobile)
+- Cause : une règle globale « header,.topbar{background:rgba(17,28,45,.94)!important} » forçait l'en-tête sombre en thème clair → titre « Dashboard » illisible. Surchargée en thème clair (fond blanc, texte foncé).
+- Mobile (≤768px) : en-tête compact (☰, titre tronqué, ⚡ accès rapides, thème, pastille LOCAL). Boutons doublons masqués (déjà dans Accès rapides et la barre du bas), plus de débordement à droite.
+- Bouton thème : plus d'inclinaison/agrandissement collant au toucher (hover désactivé sur écran tactile).
+- Barre du bas opaque (le texte ne transparaît plus) ; marge basse augmentée et pastille « Local » réduite pour ne plus masquer « Alertes récentes ».
+- Cache PWA : ets-nguilla-v16c-topbar-fix. Non testé sur appareil réel.
+
+V16d — menus premium (testé en Chromium headless : 0 erreur JS, filtre, repli et rail OK)
+- Menu latéral : dégradé, icônes en tuiles, élément actif avec barre lumineuse, badge d'alertes pulsé, carte utilisateur, déconnexion rouge au survol.
+- Filtre du menu (champ en haut, touche « / », Entrée ouvre le 1er résultat, Échap efface).
+- Sections repliables (état mémorisé) ; la page active reste visible.
+- Mode rail desktop : bouton ‹ au bord du menu, 76 px, icônes + infobulles, mémorisé.
+- Mobile : tiroir plus large avec flou d'arrière-plan, apparition échelonnée, glisser vers la gauche pour fermer.
+- Barre du bas : indicateur lumineux sur l'onglet actif, bouton central flottant, nouvel onglet « Menu » ; l'onglet actif suit la page ouverte depuis le tiroir.
+- Accessibilité : navigation clavier (Tab/Entrée), aria-current, focus visible, prefers-reduced-motion respecté.
+- Cache PWA : ets-nguilla-v16d-menus-premium.

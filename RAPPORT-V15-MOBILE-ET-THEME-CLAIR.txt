@@ -1,0 +1,13 @@
+ETS-NGUILLA & FRÈRES — RAPPORT V15
+
+Correctifs inclus :
+- Limitation des débordements horizontaux sur mobile.
+- Barre de navigation inférieure adaptée aux écrans étroits et aux zones système Android.
+- Badge de sauvegarde locale déplacé au-dessus de la navigation mobile pour limiter les chevauchements.
+- Bouton flottant IA repositionné au-dessus de la barre inférieure.
+- Panneau des accès rapides contraint à la largeur disponible et maintenu au premier plan.
+- Correctifs de mise en page des cartes et graphiques du tableau de bord.
+- Ajustements de contraste et d’ombres du thème clair avec accents bleu marine/or.
+- Version du cache PWA mise à jour afin d’éviter le chargement de l’ancienne interface en cache.
+
+Limites : les règles CSS s’appliquent aux classes et éléments présents dans le projet. Un test visuel sur les différents écrans reste nécessaire; aucun test sur un appareil physique n’a été exécuté. Sauvegarder les données avant mise à jour.

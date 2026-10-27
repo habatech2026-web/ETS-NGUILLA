@@ -1,0 +1,34 @@
+ETS N'GUILLA & FRÈRES — RAPPORT DE CONTRÔLE V11
+Date : 27 octobre 2026
+Archive source : ETS-NGUILLA-FRERES-doublons-v10.zip
+
+CONTRÔLES EFFECTUÉS
+- Archive ZIP ouverte et contenu contrôlé.
+- HTML analysé : 330 attributs id, aucun identifiant dupliqué.
+- 5 blocs JavaScript intégrés extraits et validés par node --check : OK.
+- Service worker validé par node --check : OK.
+- Script Python sri.py validé par py_compile : OK.
+- Version du cache PWA incrémentée vers ets-nguilla-v11-audit-correctifs afin de forcer le renouvellement du cache après déploiement.
+- Règles Firestore relues statiquement ; elles n'ont pas été déployées ni testées contre un projet Firebase.
+
+À SAVOIR / LIMITES
+- Aucun navigateur réel ni test de bout en bout n'est disponible dans cet environnement.
+- Aucune connexion au projet Firebase n'a été effectuée : authentification, règles, synchronisation et concurrence multi-utilisateur restent à tester en environnement de préproduction.
+- Les fonctions métier et les données n'ont pas été modifiées volontairement au-delà du versionnage du cache, afin de limiter le risque de régression sans test interactif.
+- Les limites documentées dans NOTES-CORRECTIONS.txt restent applicables, notamment les commandes fournisseurs sans réception stock intégrée et l'absence de coût historique pour certaines anciennes ventes.
+
+PROCÉDURE CONSEILLÉE AVANT PRODUCTION
+1. Faire une sauvegarde JSON depuis Administration > Sauvegarde & stockage local.
+2. Déployer sur une copie/staging, pas directement sur les données de production.
+3. Tester connexion admin/membre, création et désactivation d'utilisateur, ventes comptant/crédit, remises, stock insuffisant, retours partiels et répétés, rapports, sauvegarde/restauration et mode hors ligne.
+4. Vérifier les règles Firestore et les autorisations avec plusieurs comptes de test.
+5. Garder l'archive précédente pour retour arrière.
+
+
+CORRECTIF V12 — THEME CLAIR ET FENETRES
+- Palette claire harmonisee et contrastes renforces.
+- Superposition des fenetres (z-index) corrigee pour les modales, panneaux rapides, POS et synchronisation.
+- Modales limitees a la hauteur disponible avec defilement interne et en-tete/pied visibles.
+- Ajustements responsives pour mobiles et grands ecrans.
+- Cache PWA renouvele : ets-nguilla-v12-theme-clair-fenetres.
+- Tests statiques uniquement ; verifier les parcours fonctionnels dans un navigateur avant production.
