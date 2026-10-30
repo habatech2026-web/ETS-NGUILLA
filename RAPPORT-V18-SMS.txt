@@ -1,0 +1,30 @@
+ETS N'GUILLA & FRÈRES — V18 — Notifications SMS clients
+
+PRINCIPE
+- Envoi par l'application SMS du téléphone (lien sms:) : aucun serveur, aucune clé API, aucun coût d'abonnement, fonctionne hors ligne.
+- WhatsApp (wa.me) et « Copier » en secours (utile sur ordinateur).
+- Limite : l'app prépare le SMS, c'est la personne qui appuie sur « Envoyer ». Le suivi indique « préparé », jamais « livré ».
+- Envoi automatique/en masse sans toucher le téléphone = passerelle SMS payante (Orange, Twilio…) avec serveur. Non inclus (clé API à ne pas mettre dans l'app). À ajouter quand le fournisseur est choisi.
+
+CE QUI A ÉTÉ AJOUTÉ
+- sms-clients.js (nouveau) + 6 petites modifications dans index.html.
+- Fiche client : bouton 📱 par ligne ; case « Accepte les notifications SMS » (sms_ok).
+- Page Clients : boutons « 📱 Relances », « 📜 SMS » (historique), « ⚙️ » (réglages).
+- Proposition automatique du SMS (modifiable avant envoi) :
+  * après une vente avec client sélectionné (modale Ventes et caisse POS) : « merci » ou « achat à crédit + solde » ;
+  * après un remboursement : « paiement reçu + reste » ou « compte soldé ».
+- Relances : liste des débiteurs avec numéro valide, triée par dette, « dernière relance », masque ceux relancés depuis moins de 7 jours, bouton « Suivant ».
+- Modèles modifiables (variables {client} {montant} {dette} {num} {date} {entreprise}), compteur de SMS, option « sans accents » (160 car./SMS au lieu de 70).
+- Numéros : accepte 622 11 22 33, +224…, 00224…, plusieurs numéros séparés par / ; ; , (le premier est utilisé). Numéro corrigeable dans la fenêtre et enregistrable sur la fiche.
+- Historique (500 derniers) et réglages inclus dans la sauvegarde JSON / restauration.
+
+CORRECTIF EN PASSANT (grave)
+- Le bouton « ➕ Nouveau client » (page Clients) ouvrait la fiche sans la vider : après avoir modifié un client, « Nouveau client » ÉCRASAIT le client précédent. Il appelle maintenant openNewClient().
+
+TESTS
+- 32 contrôles automatiques OK (jsdom) : numéros, accents/segments, lien sms:, WhatsApp, journal, relances, propositions après vente crédit/comptant/remboursement/solde, client sans numéro ou sans SMS, réglages, export/import.
+- 6 scripts inline : syntaxe OK ; 0 id HTML dupliqué.
+- NON testé : sur un vrai téléphone (ouverture de Messages ; iPhone utilise &body=, Android ?body=). Tester avec votre propre numéro avant usage client.
+
+DÉPLOIEMENT
+- Pousser index.html, sms-clients.js, sw.js (cache : ets-nguilla-v18-sms-clients). Reste vrai : SRI des CDN non appliqué (python3 sri.py index.html avec Internet).

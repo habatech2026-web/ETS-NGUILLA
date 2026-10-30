@@ -1030,8 +1030,8 @@ body.light-mode .bnav-fab{background:#c99a18;color:#fff;box-shadow:0 5px 14px rg
     <input type="hidden" id="lcfg-key">
     <div id="lcfg-st"></div>
   </div>
-  <!-- Bouton accès rapide config Firebase / Firestore (affiché si mode cloud) -->
-  <div id="login-cloud-btn" style="display:none;margin-bottom:14px">
+  <!-- Configuration Firebase : déplacée dans Administration > Espace technique (verrouillé) -->
+  <div id="login-cloud-btn" style="display:none!important">
     <button onclick="openLoginCloudModal()"
       style="width:100%;display:flex;align-items:center;justify-content:space-between;
              padding:10px 14px;background:var(--bg3);border:1px solid var(--border);
@@ -1214,6 +1214,7 @@ body.light-mode .bnav-fab{background:#c99a18;color:#fff;box-shadow:0 5px 14px rg
       <input type="text" placeholder="🔍 Code, désignation…" id="sp-q" oninput="rdProduits()">
       <button class="btn btn-outline" onclick="document.getElementById('sp-q').focus();rdProduits()">🔎 Rechercher</button>
       <button class="btn btn-outline" onclick="document.getElementById('sp-q').value='';rdProduits()">↺ Effacer</button>
+      <button class="btn btn-primary" onclick="printProduitsPDF()" title="Liste imprimable : désignation, prix d'achat et de vente, dépense, bénéfice et QR code">🖨️ Liste PDF</button>
       <select id="sp-cat" onchange="rdProduits()"><option value="">Toutes catégories</option></select>
       <select id="sp-etat" onchange="rdProduits()">
         <option value="">Tous états</option>
@@ -1345,7 +1346,10 @@ body.light-mode .bnav-fab{background:#c99a18;color:#fff;box-shadow:0 5px 14px rg
         <option value="debiteur">Débiteurs</option>
         <option value="solde">Soldés</option>
       </select>
-      <button class="btn btn-primary" onclick="openM('m-client')">➕ Nouveau client</button>
+      <button class="btn btn-primary" onclick="openNewClient()">➕ Nouveau client</button>
+      <button class="btn btn-outline" onclick="SMSC.openRelance()">📨 Relances</button>
+      <button class="btn btn-outline" onclick="SMSC.openHisto()">📜 Historique</button>
+      <button class="btn btn-outline" onclick="SMSC.openCfg()" title="Réglages des notifications">⚙️</button>
     </div>
     <div class="kpi-grid" style="margin-bottom:16px">
       <div class="kpi" style="--kc:var(--blue);--kb:var(--blue-glow)"><div class="kpi-icon">👥</div><div><div class="kpi-val" id="cl-nb">—</div><div class="kpi-label">Clients</div></div></div>
@@ -1450,6 +1454,7 @@ body.light-mode .bnav-fab{background:#c99a18;color:#fff;box-shadow:0 5px 14px rg
           <div style="margin-left:auto;display:flex;gap:8px;flex-wrap:wrap">
             <button class="btn btn-outline btn-sm" onclick="xExcelRapport()">📥 Excel</button>
             <button class="btn btn-outline btn-sm" onclick="xPDF()">📄 Stock PDF</button>
+            <button class="btn btn-outline btn-sm" onclick="xPDFPeriode()">📑 Rapport période PDF</button>
             <button class="btn btn-primary btn-sm" onclick="xPDFJournalier()">📋 Rapport Journalier</button>
           </div>
         </div>
@@ -1460,7 +1465,7 @@ body.light-mode .bnav-fab{background:#c99a18;color:#fff;box-shadow:0 5px 14px rg
     <div class="kpi-grid" style="margin-bottom:16px">
       <div class="kpi" style="--kc:var(--green);--kb:var(--green-glow)"><div class="kpi-icon">💰</div><div><div class="kpi-val" id="r-ca">—</div><div class="kpi-label">CA période (GNF)</div><div class="kpi-delta delta-ne" id="r-ca-nb">0 ventes</div></div></div>
       <div class="kpi" style="--kc:var(--blue);--kb:var(--blue-glow)"><div class="kpi-icon">💹</div><div><div class="kpi-val" id="r-mg">—</div><div class="kpi-label">Marge brute</div><div class="kpi-delta delta-ne" id="r-mg-pct">0%</div></div></div>
-      <div class="kpi" style="--kc:var(--red);--kb:var(--red-glow)"><div class="kpi-icon">💸</div><div><div class="kpi-val" id="r-dep">—</div><div class="kpi-label">Dépenses période</div><div class="kpi-delta delta-ne" id="r-ben-net">Bénéfice net: —</div></div></div>
+      <div class="kpi" style="--kc:var(--red);--kb:var(--red-glow)"><div class="kpi-icon">💸</div><div><div class="kpi-val" id="r-dep">—</div><div class="kpi-label">Charges période (hors achats)</div><div class="kpi-delta delta-ne" id="r-ben-net">Résultat net : —</div></div></div>
       <div class="kpi" style="--kc:var(--orange);--kb:var(--orange-glow)"><div class="kpi-icon">🗑️</div><div><div class="kpi-val" id="r-prt">—</div><div class="kpi-label">Pertes (GNF)</div><div class="kpi-delta delta-dn" id="r-prt-nb">0 entrées</div></div></div>
     </div>
     <div class="kpi-grid" style="margin-bottom:18px">
@@ -1490,6 +1495,21 @@ body.light-mode .bnav-fab{background:#c99a18;color:#fff;box-shadow:0 5px 14px rg
         <div class="card-body"><div class="chart-wrap" style="height:240px"><canvas id="ch-top"></canvas></div></div>
       </div>
     </div>
+    <!-- Détails : compte de résultat, créances, paiements, charges, top marges -->
+    <div class="g2eq" style="margin-bottom:16px">
+      <div class="card"><div class="card-head"><h3>🧾 Compte de résultat simplifié</h3><span style="font-size:11px;color:var(--text3)">Période vs précédente</span></div>
+        <div class="card-body" style="padding:0"><div class="tw" id="rpt-compte"></div></div></div>
+      <div class="card"><div class="card-head"><h3>📒 Créances clients</h3></div>
+        <div class="card-body" id="rpt-creances"></div></div>
+    </div>
+    <div class="g2eq" style="margin-bottom:16px">
+      <div class="card"><div class="card-head"><h3>💳 Paiements et caissiers</h3></div>
+        <div class="card-body" id="rpt-paiements"></div></div>
+      <div class="card"><div class="card-head"><h3>🗂️ Charges et alertes stock</h3></div>
+        <div class="card-body" id="rpt-charges"></div></div>
+    </div>
+    <div class="card" style="margin-bottom:16px"><div class="card-head"><h3>🏅 Top 10 produits — marge en GNF</h3></div>
+      <div class="card-body" style="padding:0"><div class="tw" id="rpt-topmarge"></div></div></div>
     <!-- Tableau marges produits -->
     <div class="card">
       <div class="card-head"><h3>💹 Marges par produit</h3><span style="font-size:11px;color:var(--text3)">Prix achat → vente</span></div>
@@ -1519,13 +1539,38 @@ body.light-mode .bnav-fab{background:#c99a18;color:#fff;box-shadow:0 5px 14px rg
           </div>
         </div>
       </div>
-      <div class="card">
-        <div class="card-head"><h3>🔥 Configuration Firebase / Firestore</h3></div>
+      <div class="card" style="grid-column:1/-1" id="tech-card">
+        <div class="card-head"><h3>🔐 Espace technique Firebase</h3><span id="tech-status" class="tag critique">Verrouillé</span></div>
         <div class="card-body">
-          <p style="font-size:12px;color:var(--text3);margin-bottom:10px">Firebase Console → Paramètres du projet → Vos applications → Configuration du SDK Web.</p>
-          <div class="fgrp"><label>Configuration Firebase — JSON</label><textarea id="cfg-firebase" rows="7" placeholder='{"apiKey":"...","authDomain":"votre-projet.firebaseapp.com","projectId":"votre-projet","appId":"..."}'></textarea></div>
-          <div style="display:flex;gap:10px;flex-wrap:wrap"><button class="btn btn-primary" onclick="saveSBCfg()">💾 Enregistrer</button><button class="btn btn-outline" onclick="testSB()">🔌 Tester Firestore</button></div>
-          <div id="conn-st" style="margin-top:10px;font-size:12px;color:var(--text3)"></div>
+          <div id="tech-locked">
+            <p style="font-size:12px;color:var(--text3);margin-bottom:12px;line-height:1.5">La configuration Firebase et les informations d’authentification sont masquées. Saisissez votre mot de passe administrateur pour y accéder. L’accès se referme automatiquement après 5 minutes.</p>
+            <div class="fgrp" style="max-width:360px"><label>Mot de passe administrateur</label><input type="password" id="tech-pass" autocomplete="current-password" onkeydown="if(event.key==='Enter')unlockTech()"></div>
+            <button class="btn btn-primary" onclick="unlockTech()">🔓 Déverrouiller</button>
+          </div>
+          <div id="tech-open" style="display:none">
+            <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:12px">
+              <span style="font-size:12px;color:var(--orange)">⚠️ Ne partagez jamais ces informations. Ne les copiez pas dans un message ou un document.</span>
+              <button class="btn btn-outline btn-sm" onclick="lockTech()">🔒 Verrouiller</button>
+            </div>
+            <div class="g2eq">
+              <div>
+                <div class="fgrp"><label>Configuration Firebase — JSON</label><textarea id="cfg-firebase" rows="7" placeholder='{"apiKey":"...","authDomain":"votre-projet.firebaseapp.com","projectId":"votre-projet","appId":"..."}'></textarea></div>
+                <div style="display:flex;gap:10px;flex-wrap:wrap"><button class="btn btn-primary" onclick="saveSBCfg()">💾 Enregistrer</button><button class="btn btn-outline" onclick="testSB()">🔌 Tester Firestore</button></div>
+                <div id="conn-st" style="margin-top:10px;font-size:12px;color:var(--text3)"></div>
+              </div>
+              <div>
+                <div style="font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.7px;margin-bottom:8px">Mise en place Firebase</div>
+                <ol style="padding-left:20px;font-size:12px;line-height:1.8;color:var(--text2)"><li>Créez un projet dans Firebase Console.</li><li>Activez Firestore Database et Authentication par e-mail/mot de passe.</li><li>Ajoutez une application Web et collez la configuration JSON ci-dessus.</li><li>Les collections attendues sont produits, mouvements, ventes, commandes, fournisseurs, utilisateurs, clients, depenses et retours.</li><li>Configurez des règles Firestore strictes avant la production.</li></ol>
+                <div style="font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.7px;margin:14px 0 8px">Authentification</div>
+                <ul style="padding-left:20px;font-size:12px;line-height:1.8;color:var(--text2)">
+                  <li>Fournisseur « E-mail/Mot de passe » activé dans Firebase Authentication.</li>
+                  <li>Un seul compte administrateur au départ ; les autres comptes se créent depuis Utilisateurs.</li>
+                  <li>Ne désactivez pas l’inscription publique : la gestion des comptes en dépend.</li>
+                </ul>
+              </div>
+            </div>
+            <textarea id="sql-out" style="display:none"></textarea>
+          </div>
         </div>
       </div>
       <div class="card">
@@ -1536,9 +1581,7 @@ body.light-mode .bnav-fab{background:#c99a18;color:#fff;box-shadow:0 5px 14px rg
         <div class="card-head"><h3>🏭 Fournisseurs</h3><button class="btn btn-primary btn-sm" onclick="openM('m-fourn')">➕</button></div>
         <div class="card-body"><div class="tw"><table><thead><tr><th>Nom</th><th>Pays</th><th>Délai</th><th></th></tr></thead><tbody id="tb-fourn"></tbody></table></div></div>
       </div>
-      <div class="card">
-        <div class="card-head"><h3>🧭 Mise en place Firestore</h3></div><div class="card-body"><ol style="padding-left:20px;font-size:12px;line-height:1.8;color:var(--text2)"><li>Créez un projet dans Firebase Console.</li><li>Activez Firestore Database et Authentication par e-mail/mot de passe.</li><li>Ajoutez une application Web et collez la configuration JSON ci-dessus.</li><li>Les collections attendues sont produits, mouvements, ventes, commandes, fournisseurs, utilisateurs, clients, depenses et retours.</li><li>Configurez des règles Firestore strictes avant la production.</li></ol><textarea id="sql-out" style="display:none"></textarea></div>
-      </div>
+      
 
       <!-- DOUBLONS -->
       <div class="card">
@@ -1796,6 +1839,9 @@ body.light-mode .bnav-fab{background:#c99a18;color:#fff;box-shadow:0 5px 14px rg
       <div class="ff"><label>Nom complet *</label><input id="cl-nom" placeholder="Prénom NOM"></div>
       <div><label>Téléphone</label><input id="cl-tel" placeholder="+224 6xx xxx xxx"></div>
       <div><label>Adresse</label><input id="cl-adr" placeholder="Quartier, ville…"></div>
+      <div><label>E-mail</label><input id="cl-email" type="email" placeholder="client@exemple.com"></div>
+      <div><label>Canal préféré</label><select id="cl-canal"><option value="sms">📱 SMS</option><option value="whatsapp">💬 WhatsApp</option><option value="email">✉️ E-mail</option></select></div>
+      <div class="ff"><label style="display:flex;gap:8px;align-items:center;cursor:pointer"><input type="checkbox" id="cl-sms" checked> Accepte les notifications (SMS, WhatsApp, e-mail)</label></div>
       <div class="ff"><label>Notes</label><textarea id="cl-note" rows="2" placeholder="Infos complémentaires…"></textarea></div>
     </div>
   </div>
@@ -1936,11 +1982,34 @@ class FirestoreQuery{
  then(resolve,reject){return this.execute().then(resolve,reject);} catch(reject){return this.execute().catch(reject);}
 }
 function readFirebaseJson(value){let c;try{c=JSON.parse(value);}catch(e){throw new Error('JSON invalide. Copiez la configuration Web depuis Firebase Console.');}if(!firebaseReadyFor(c))throw new Error('Champs obligatoires manquants : apiKey, projectId et appId.');return c;}
-function loadFirebaseConfig(){const json=JSON.stringify(FB_CONFIG,null,2);['cfg-firebase','qcfg-json','prod-firebase-json'].forEach(id=>{const el=document.getElementById(id);if(el)el.value=json==='{}'?'':json;});const h=document.getElementById('lcfg-url');if(h)h.value=json==='{}'?'':json;updateLoginSBStatus();}
+var TECH_OK=false,TECH_T=null,TECH_FAILS=0,TECH_LOCK=0;
+function loadFirebaseConfig(){updateLoginSBStatus();if(!TECH_OK)return;const json=JSON.stringify(FB_CONFIG,null,2);const el=document.getElementById('cfg-firebase');if(el)el.value=json==='{}'?'':json;}
+/* Espace technique : déverrouillage par mot de passe administrateur, fermeture auto après 5 min */
+function setTechUI(open){const a=document.getElementById('tech-locked'),b=document.getElementById('tech-open'),st=document.getElementById('tech-status');if(a)a.style.display=open?'none':'';if(b)b.style.display=open?'':'none';if(st){st.textContent=open?'Déverrouillé':'Verrouillé';st.className='tag '+(open?'normal':'critique');}}
+function lockTech(){TECH_OK=false;clearTimeout(TECH_T);TECH_T=null;const ta=document.getElementById('cfg-firebase');if(ta)ta.value='';const p=document.getElementById('tech-pass');if(p)p.value='';setTechUI(false);}
+async function verifyAdminPassword(pw){
+  if(!CU||CU.role!=='admin')return false;
+  if(ACCESS_MODE==='cloud'){try{const usr=firebaseAuth&&firebaseAuth.currentUser;if(!usr)return false;await usr.reauthenticateWithCredential(firebase.auth.EmailAuthProvider.credential(usr.email,pw));return true;}catch(e){return false;}}
+  const em=String(CU.email||'').toLowerCase();
+  const demo=ALLOW_DEMO&&DEMOS.find(d=>d.email===em);if(demo)return pw===demo.pass;
+  const acc=lu().find(x=>String(x.email).toLowerCase()===em);if(!acc||!hasCrypto())return false;
+  const h=await pbk(pw,unb64(acc.salt),acc.it||IT);return h===acc.hash;
+}
+async function unlockTech(){
+  const inp=document.getElementById('tech-pass');const pw=inp?inp.value:'';
+  if(!pw){toast('Saisissez votre mot de passe administrateur','warning');return;}
+  if(Date.now()<TECH_LOCK){toast('Trop d’essais. Patientez quelques secondes.','error');return;}
+  const ok=await verifyAdminPassword(pw);if(inp)inp.value='';
+  if(!ok){TECH_FAILS++;if(TECH_FAILS>=5){TECH_LOCK=Date.now()+30000;TECH_FAILS=0;}toast('Accès refusé : mot de passe incorrect','error');return;}
+  TECH_FAILS=0;TECH_OK=true;loadFirebaseConfig();setTechUI(true);
+  clearTimeout(TECH_T);TECH_T=setTimeout(()=>{lockTech();toast('Espace technique verrouillé (inactivité)','info');},5*60*1000);
+}
+document.addEventListener('visibilitychange',()=>{if(document.hidden)lockTech();});
+function loadFirebaseConfigLegacy(){}
 function initSB(){loadFirebaseConfig();setLoginMode(ACCESS_MODE,false);updateLoginSBStatus();if(ACCESS_MODE==='cloud'&&firebaseReady())try{initFirebase();}catch(e){console.warn(e);}}
 function setLoginMode(mode,save=true){ACCESS_MODE=mode;if(save)localStorage.setItem('access_mode',mode);const isCloud=mode==='cloud';const bl=document.getElementById('login-mode-local'),bc=document.getElementById('login-mode-cloud');if(bl)bl.className='mode-select-btn'+(isCloud?'':' sel-local');if(bc)bc.className='mode-select-btn'+(isCloud?' sel-cloud':'');const cfgBtn=document.getElementById('login-cloud-btn');if(cfgBtn)cfgBtn.style.display=isCloud?'block':'none';updateLoginSBStatus();const demos=document.querySelector('.demos');if(demos)demos.style.display=isCloud?'none':'block';updateModeUI();}
 function updateLoginSBStatus(){const dot=document.getElementById('login-sb-indicator'),lbl=document.getElementById('login-sb-label');if(!dot||!lbl)return;const ok=firebaseReady();dot.style.background=ok?'var(--green)':'var(--orange)';lbl.textContent=ok?'Configuré ✓':'Non configuré';lbl.style.color=ok?'var(--green)':'var(--orange)';}
-function openLoginCloudModal(){if(!document.getElementById('m-cloud-quick'))buildQuickCloudModal();const el=document.getElementById('qcfg-json');if(el)el.value=JSON.stringify(FB_CONFIG,null,2)==='{}'?'':JSON.stringify(FB_CONFIG,null,2);const st=document.getElementById('qcfg-st');if(st)st.textContent='';document.getElementById('m-cloud-quick').classList.add('open');}
+function openLoginCloudModal(){toast('La configuration Firebase se gère dans Administration › Espace technique','info');}
 function buildQuickCloudModal(){const div=document.createElement('div');div.className='overlay';div.id='m-cloud-quick';div.onclick=e=>{if(e.target===div)div.classList.remove('open');};div.innerHTML=`<div class="modal" style="max-width:460px"><div class="modal-head"><h3>🔥 Configuration Firebase / Firestore</h3><span class="modal-close" onclick="document.getElementById('m-cloud-quick').classList.remove('open')">×</span></div><div class="modal-body"><p style="font-size:12px;color:var(--text3);margin-bottom:16px;line-height:1.5">Collez la configuration Web JSON de votre projet Firebase.</p><div class="fgrp"><label>Configuration Firebase — JSON</label><textarea id="qcfg-json" rows="8" placeholder='{"apiKey":"...","authDomain":"...","projectId":"...","appId":"..."}'></textarea></div><div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn btn-outline btn-sm" onclick="testQuickCloud()">🔌 Tester</button><button class="btn btn-primary btn-sm" onclick="saveQuickCloud()">💾 Sauvegarder</button></div><div id="qcfg-st" style="margin-top:10px;font-size:12px;color:var(--text3)"></div></div><div class="modal-foot"><button class="btn btn-outline" onclick="document.getElementById('m-cloud-quick').classList.remove('open')">Fermer</button></div></div>`;document.body.appendChild(div);}
 async function testQuickCloud(){const st=document.getElementById('qcfg-st');try{const c=readFirebaseJson(document.getElementById('qcfg-json')?.value||'');initFirebase(c);await firestoreDB.collection('produits').limit(1).get();FB_CONFIG=c;st.innerHTML='<span style="color:var(--green)">✅ Firestore accessible. Vérifiez les règles de sécurité.</span>';}catch(e){st.innerHTML='<span style="color:var(--red)">❌ '+e.message+'</span>';}}
 function saveQuickCloud(){try{FB_CONFIG=readFirebaseJson(document.getElementById('qcfg-json')?.value||'');localStorage.setItem('firebase_config',JSON.stringify(FB_CONFIG));initFirebase();loadFirebaseConfig();toast('Configuration Firebase enregistrée','success');setTimeout(()=>document.getElementById('m-cloud-quick')?.classList.remove('open'),1000);}catch(e){toast(e.message,'error');}}
@@ -2138,7 +2207,7 @@ function checkProdConfirm(){
   if(inp)inp.style.borderColor=val&&!ok?'var(--red)':ok?'var(--green)':'var(--border)';
 }
 
-function doProdReset(){if((document.getElementById('prod-confirm-input')?.value||'').trim()!=='PRODUCTION'){toast('Confirmation incorrecte','error');return;}let config={};const raw=(document.getElementById('prod-firebase-json')?.value||'').trim();if(raw){try{config=readFirebaseJson(raw);}catch(e){toast(e.message,'error');return;}}const keys=['db_p','db_m','db_v','db_c','db_f','db_u','db_cl','db_dp','db_rt','db_j','db_cats','firebase_config','access_mode'];keys.forEach(k=>localStorage.removeItem(k));if(firebaseReadyFor(config))localStorage.setItem('firebase_config',JSON.stringify(config));localStorage.setItem('access_mode',firebaseReadyFor(config)?'cloud':'local');closeM('m-prod-mode');toast('🚀 Mode production préparé — rechargement…','success');setTimeout(()=>location.reload(),1400);}
+function doProdReset(){if((document.getElementById('prod-confirm-input')?.value||'').trim()!=='PRODUCTION'){toast('Confirmation incorrecte','error');return;}const config=FB_CONFIG;const keepCloud=ACCESS_MODE==='cloud';const keys=['db_p','db_m','db_v','db_c','db_f','db_u','db_cl','db_dp','db_rt','db_j','db_cats','access_mode'];keys.forEach(k=>localStorage.removeItem(k));if(firebaseReadyFor(config))localStorage.setItem('firebase_config',JSON.stringify(config));localStorage.setItem('access_mode',keepCloud&&firebaseReadyFor(config)?'cloud':'local');closeM('m-prod-mode');toast('🚀 Mode production préparé — rechargement…','success');setTimeout(()=>location.reload(),1400);}
 
 // ═══════════════════════════════
 //  DATA
@@ -2278,7 +2347,7 @@ initTheme();
 // ═══════════════════════════════
 //  NAVIGATION
 // ═══════════════════════════════
-function goPage(pg,el){try{localStorage.setItem('ets_last_page',pg);}catch(e){}
+function goPage(pg,el){if(pg!=='admin'&&typeof lockTech==='function')lockTech();try{localStorage.setItem('ets_last_page',pg);}catch(e){}
   document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
   const s=document.getElementById('s-'+pg);if(s)s.classList.add('active');
@@ -2855,7 +2924,7 @@ async function saveVente(){
   const now=new Date().toISOString().slice(0,16).replace('T',' ');
   const lignes=LV.map(l=>{const p=D.produits.find(x=>String(x.id)===String(l.produit_id));return {...l,cout_achat:Number(p?.achat)||0};});
   const nv={id:nid('ventes'),num:'VTE-'+new Date().getFullYear()+'-'+nseq('ventes'),date:now,
-    articles:lignes.length,montant:tot,paiement,client_id:clientId,statut:'finalisee',lignes};
+    articles:lignes.length,montant:tot,paiement,client_id:clientId,statut:'finalisee',lignes,remise:rem,acompte,user:CU?.nom||'Caissier'};
   D.ventes.unshift(nv);
   for(const l of lignes){
     const p=D.produits.find(x=>String(x.id)===String(l.produit_id));
@@ -3518,49 +3587,257 @@ async function printFacture(id){
   if(!window.jspdf?.jsPDF){toast('Le module PDF est indisponible. Vérifiez votre connexion puis réessayez.','error');return;}
   const {jsPDF}=window.jspdf,doc=new jsPDF({unit:'mm',format:'a4'});
   const c=v.client_id?(D.clients||[]).find(x=>Number(x.id)===Number(v.client_id)):null;
-  const money=n=>`${(Number(n)||0).toLocaleString('fr-FR').replace(/[\u202F\u00A0]/g,' ')} GNF`;
+  const money=n=>`${(Number(n)||0).toLocaleString('fr-FR').replace(/[  ]/g,' ')} GNF`;
   const safeText=t=>String(t??'—').replace(/[\r\n]+/g,' ').trim();
+  // Date au format français JJ/MM/AAAA HH:mm (accepte "2026-10-29 14:32" ou ISO).
+  const fmtDate=d=>{const m=/^(\d{4})-(\d{2})-(\d{2})(?:[T ](\d{2}):(\d{2}))?/.exec(String(d??''));return m?`${m[3]}/${m[2]}/${m[1]}${m[4]?' '+m[4]+':'+m[5]:''}`:safeText(d);};
   const pageW=210,left=13,right=197,usable=right-left,lines=Array.isArray(v.lignes)?v.lignes:[];
-  const dateTxt=typeof fdt==='function'?fdt(v.date):safeText(v.date),invoiceNo=`FAC-${safeText(v.num||v.id)}`;
-  const navy=[8,55,105],gold=[255,190,0],pale=[244,248,252];
+  const invoiceNo=`FAC-${safeText(v.num||v.id)}`,dateTxt=fmtDate(v.date);
+  const navy=[8,55,105],gold=[255,190,0];
+  // Coordonnées de l'entreprise : à vérifier avant diffusion.
+  const CONTACT={tel:'+224 622 00 00 00',mail:'contact@nguille-freres.com',web:'www.nguille-freres.com'};
+  const total=Number(v.montant)||0,remise=Number(v.remise)||0,acompte=Number(v.acompte)||0;
+  const sousTotal=lines.reduce((s,l)=>s+(Number(l.qte)||0)*(Number(l.prix)||0),0);
+  // Détail sous-total / remise seulement s'il est cohérent avec le total enregistré (pas de chiffre inventé pour les anciennes ventes).
+  const showBreakdown=lines.length?Math.abs(sousTotal-remise-total)<1:false;
+  const reste=total-acompte;
+
+  // QR de vérification préparé avant le dessin (le tableau et la zone de totaux sont placés autour).
+  let qrUrl=null;
+  try{
+    let qrLibReady=typeof QRCode!=='undefined'&&typeof QRCode.toDataURL==='function';
+    if(!qrLibReady&&typeof ensureQRCode==='function')qrLibReady=await ensureQRCode();
+    if(qrLibReady&&typeof QRCode.toDataURL==='function'){
+      const qrPayload=JSON.stringify({type:'FACTURE_ETS_NGUILLA',numero:invoiceNo,vente_id:v.id,date:safeText(v.date),montant:total,devise:'GNF'});
+      qrUrl=await QRCode.toDataURL(qrPayload,{width:240,margin:2,errorCorrectionLevel:'M',color:{dark:'#082f59',light:'#ffffff'}});
+    } else console.warn('QR facture non généré : bibliothèque QR indisponible.');
+  }catch(qrErr){console.error('Erreur génération QR facture',qrErr);}
+
   const drawHeader=()=>{
     doc.setFillColor(255,255,255);doc.rect(0,0,pageW,43,'F');doc.setFillColor(...navy);doc.rect(0,0,pageW,5,'F');doc.setFillColor(...gold);doc.rect(0,5,3,38,'F');
     doc.setFillColor(...navy);doc.rect(0,0,4,43,'F');doc.setFillColor(...gold);doc.triangle(4,0,35,0,4,9,'F');
     doc.setTextColor(...navy);doc.setFont('helvetica','bold');doc.setFontSize(18);doc.text("ETS N'GUILLA",left+3,16);
-    doc.setTextColor(...gold);doc.setFontSize(17);doc.text('& FRÈRES',left+3,24);doc.setFont('helvetica','italic');doc.setFontSize(9);doc.setTextColor(...navy);doc.text('Votre partenaire de confiance',left+3,31);doc.text('en gros et en détails',left+3,36);
+    doc.setTextColor(...gold);doc.setFontSize(17);doc.text('& FRÈRES',left+3,24);
+    doc.setFont('helvetica','italic');doc.setFontSize(9);doc.setTextColor(...navy);doc.text('Votre partenaire de confiance',left+3,31);doc.text('en gros et en détails',left+3,36);
     doc.setFont('helvetica','normal');doc.setFontSize(7);doc.setTextColor(40,55,75);doc.text('PRODUITS ALIMENTAIRES  |  ÉPICERIE GÉNÉRALE  |  QUALITÉ & SERVICE',left+3,41);
-    doc.setFillColor(...navy);doc.rect(132,0,78,43,'F');doc.setFillColor(...gold);doc.triangle(128,0,136,0,128,17,'F');doc.setTextColor(255,255,255);doc.setFont('helvetica','bold');doc.setFontSize(16);doc.text('▤ FACTURE',194,15,{align:'right'});doc.setFillColor(...gold);doc.roundedRect(145,19,52,8,2,2,'F');doc.setTextColor(8,35,65);doc.setFontSize(8);doc.text(invoiceNo,194,24.5,{align:'right'});doc.setFont('helvetica','normal');doc.setFontSize(8);doc.setTextColor(255,255,255);doc.text('Émise le',145,34);doc.text(safeText(dateTxt),194,34,{align:'right'});doc.setFillColor(...gold);doc.rect(0,43,pageW,2,'F');
+    doc.setFillColor(...navy);doc.rect(132,0,78,43,'F');doc.setFillColor(...gold);doc.triangle(128,0,136,0,128,17,'F');
+    doc.setTextColor(255,255,255);doc.setFont('helvetica','bold');doc.setFontSize(18);doc.text('FACTURE',194,16,{align:'right'});
+    doc.setFillColor(...gold);doc.roundedRect(145,20,52,8,2,2,'F');doc.setTextColor(8,35,65);doc.setFontSize(8.5);doc.text('N° '+invoiceNo,194,25.3,{align:'right'});
+    doc.setFont('helvetica','normal');doc.setFontSize(8);doc.setTextColor(255,255,255);doc.text('Date d’émission',145,35);doc.text(dateTxt,194,35,{align:'right'});
+    doc.setFillColor(...gold);doc.rect(0,43,pageW,2,'F');
   };
-  const drawTableHead=y=>{doc.setFillColor(...navy);doc.roundedRect(left,y,usable,10,1.5,1.5,'F');doc.setFillColor(...gold);doc.rect(left,y+9,usable,1,'F');doc.setFont('helvetica','bold');doc.setFontSize(8);doc.setTextColor(255,255,255);doc.text('N°',left+5,y+6.5);doc.text('DÉSIGNATION',left+17,y+6.5);doc.text('QTÉ',126,y+6.5,{align:'right'});doc.text('PRIX U.',161,y+6.5,{align:'right'});doc.text('MONTANT',right-3,y+6.5,{align:'right'});};
-  drawHeader();let y=54;
-  doc.setFillColor(235,243,251);doc.roundedRect(left,y,89,31,2,2,'F');doc.setDrawColor(210,223,236);doc.roundedRect(left,y,89,31,2,2,'S');doc.setFillColor(...navy);doc.roundedRect(109,y,88,31,2,2,'F');
-  doc.setTextColor(255,205,20);doc.setFont('helvetica','bold');doc.setFontSize(8);doc.text('INFORMATIONS CLIENT',left+4,y+6);doc.setTextColor(...navy);doc.setFontSize(10);doc.text(doc.splitTextToSize(safeText(c?.nom||'Client comptoir'),80).slice(0,2),left+4,y+13);doc.setFont('helvetica','normal');doc.setFontSize(8);doc.setTextColor(50,65,85);if(c?.tel)doc.text('Tél. : '+safeText(c.tel),left+4,y+22);if(c?.adresse)doc.text(doc.splitTextToSize(safeText(c.adresse),80)[0]||'',left+4,y+27);
-  doc.setFont('helvetica','bold');doc.setTextColor(255,205,20);doc.text('PAIEMENT & FACTURATION',113,y+7);doc.setFont('helvetica','normal');doc.setTextColor(255,255,255);doc.text('Mode : '+safeText(v.paiement||'Non précisé'),113,y+15);doc.text('Statut : ENREGISTRÉE',113,y+22);doc.text('Devise : GNF',113,y+28);
-  y=95;drawTableHead(y);y+=14;doc.setFont('helvetica','normal');doc.setFontSize(8.5);
-  if(!lines.length){doc.setTextColor(100,116,139);doc.text('Aucun détail d’article disponible.',left+17,y);y+=8;}
-  lines.forEach((l,idx)=>{const name=safeText(l.produit||l.designation||'Article'),wrapped=doc.splitTextToSize(name,92),rowH=Math.max(10,wrapped.length*4.2+5);if(y+rowH>255){doc.addPage();drawHeader();y=53;drawTableHead(y);y+=14;}if(idx%2===0){doc.setFillColor(244,248,252);doc.rect(left,y-6,usable,rowH,'F');}doc.setDrawColor(205,216,227);doc.setLineWidth(.2);doc.line(left,y+rowH-6,right,y+rowH-6);doc.setTextColor(...navy);doc.text(String(idx+1),left+5,y);doc.text(wrapped.slice(0,3),left+17,y);doc.text(String(Number(l.qte)||0),126,y,{align:'right'});doc.text(money(l.prix),161,y,{align:'right'});doc.setFont('helvetica','bold');doc.text(money((Number(l.qte)||0)*(Number(l.prix)||0)),right-3,y,{align:'right'});doc.setFont('helvetica','normal');y+=rowH;});
-  y+=5;doc.setDrawColor(190,205,220);doc.setLineWidth(.4);doc.line(left,y,right,y);y+=9;if(y>255){doc.addPage();drawHeader();y=55;}doc.setFillColor(...navy);doc.roundedRect(112,y-5,85,23,2,2,'F');doc.setFillColor(...gold);doc.roundedRect(151,y-5,46,23,2,2,'F');doc.setTextColor(255,255,255);doc.setFont('helvetica','bold');doc.setFontSize(8);doc.text('TOTAL À PAYER',117,y+2);doc.setTextColor(...navy);doc.setFontSize(12);doc.text(money(v.montant),194,y+10,{align:'right'});y+=30;if(y>272){doc.addPage();drawHeader();y=55;}doc.setDrawColor(...gold);doc.setLineWidth(.8);doc.line(left,y,right,y);y+=8;doc.setFont('helvetica','bold');doc.setFontSize(11);doc.setTextColor(...navy);doc.setFont('helvetica','italic');doc.text('Merci pour votre confiance !',pageW/2,y,{align:'center'});doc.setFont('helvetica','normal');doc.setFontSize(7.5);doc.setTextColor(80,95,110);doc.text('Nous vous remercions pour votre fidélité.',pageW/2,y+6,{align:'center'});doc.text('N’hésitez pas à revenir pour vos prochains achats.',pageW/2,y+10,{align:'center'});doc.setFillColor(...navy);doc.rect(0,283,pageW,14,'F');doc.setFillColor(...gold);doc.rect(0,283,pageW,1.2,'F');doc.setTextColor(255,255,255);doc.setFontSize(7);doc.text("ETS N'GUILLA & FRÈRES  |  République de Guinée  |  Tél. +224 622 00 00 00",pageW/2,290,{align:'center'});doc.text('contact@nguille-freres.com  •  www.nguille-freres.com',pageW/2,294,{align:'center'});
-  // QR de vérification : intégré directement au PDF (ne dépend pas d'une image distante).
-  try {
-    let qrLibReady = typeof QRCode !== 'undefined' && typeof QRCode.toDataURL === 'function';
-    if (!qrLibReady && typeof ensureQRCode === 'function') qrLibReady = await ensureQRCode();
-    if (qrLibReady && typeof QRCode.toDataURL === 'function') {
-      const qrPayload = JSON.stringify({type:'FACTURE_ETS_NGUILLA',numero:invoiceNo,vente_id:v.id,date:safeText(v.date),montant:Number(v.montant)||0,devise:'GNF'});
-      const qrDataUrl = await QRCode.toDataURL(qrPayload,{width:240,margin:2,errorCorrectionLevel:'M',color:{dark:'#082f59',light:'#ffffff'}});
-      doc.setPage(1);
-      doc.setFillColor(255,255,255);doc.setDrawColor(210,223,236);doc.roundedRect(left,242,32,32,2,2,'FD');
-      doc.addImage(qrDataUrl,'PNG',left+2,244,28,28);
-      doc.setFont('helvetica','bold');doc.setFontSize(5.5);doc.setTextColor(...navy);doc.text('SCANNER POUR VÉRIFIER',left+16,276,{align:'center'});
-    } else {
-      console.warn('QR facture non généré : bibliothèque QR indisponible.');
-    }
-  } catch(qrErr) { console.error('Erreur génération QR facture',qrErr); }
-  const pages=doc.internal.getNumberOfPages();for(let i=1;i<=pages;i++){doc.setPage(i);doc.setFont('helvetica','normal');doc.setFontSize(7);doc.setTextColor(148,163,184);doc.text(`Document ${invoiceNo} • Page ${i}/${pages}`,right,279,{align:'right'});}doc.save('Facture_'+String(v.num||v.id)+'_'+new Date().toISOString().slice(0,10)+'.pdf');toast('Facture PDF générée','success');if(typeof logAction==='function')logAction('CREATE','Facture PDF : '+(v.num||v.id));
+  const drawTableHead=y=>{
+    doc.setFillColor(...navy);doc.roundedRect(left,y,usable,10,1.5,1.5,'F');doc.setFillColor(...gold);doc.rect(left,y+9,usable,1,'F');
+    doc.setFont('helvetica','bold');doc.setFontSize(8);doc.setTextColor(255,255,255);
+    doc.text('N°',left+4,y+6.5);doc.text('DÉSIGNATION',left+15,y+6.5);doc.text('QTÉ',131,y+6.5,{align:'right'});doc.text('PRIX UNIT.',163,y+6.5,{align:'right'});doc.text('MONTANT',right-3,y+6.5,{align:'right'});
+  };
+
+  drawHeader();
+  // Blocs client et paiement
+  let y=54;
+  doc.setFillColor(235,243,251);doc.roundedRect(left,y,89,31,2,2,'F');doc.setDrawColor(210,223,236);doc.roundedRect(left,y,89,31,2,2,'S');
+  doc.setFillColor(...navy);doc.roundedRect(109,y,88,31,2,2,'F');
+  doc.setTextColor(...navy);doc.setFont('helvetica','bold');doc.setFontSize(8);doc.text('FACTURÉ À',left+4,y+6);
+  doc.setFontSize(10);doc.text(doc.splitTextToSize(safeText(c?.nom||'Client comptoir'),80).slice(0,1),left+4,y+13);
+  doc.setFont('helvetica','normal');doc.setFontSize(8);doc.setTextColor(50,65,85);
+  if(c?.tel)doc.text('Tél. : '+safeText(c.tel),left+4,y+20);
+  if(c?.adresse)doc.text(doc.splitTextToSize(safeText(c.adresse),80).slice(0,1)[0]||'',left+4,y+25);
+  doc.setFont('helvetica','bold');doc.setTextColor(255,205,20);doc.setFontSize(8);doc.text('PAIEMENT',113,y+7);
+  doc.setFont('helvetica','normal');doc.setTextColor(255,255,255);doc.setFontSize(8);
+  doc.text('Mode : '+safeText(v.paiement||'Non précisé'),113,y+15);
+  doc.text('Statut : ENREGISTRÉE',113,y+21);
+  doc.text('Devise : GNF',113,y+27);
+
+  // Tableau des articles
+  y=95;drawTableHead(y);y+=14;
+  doc.setFont('helvetica','normal');doc.setFontSize(8.5);
+  if(!lines.length){doc.setTextColor(100,116,139);doc.text('Aucun détail d’article disponible.',left+15,y);y+=8;}
+  lines.forEach((l,idx)=>{
+    const name=safeText(l.produit||l.designation||'Article');
+    const wrapped=doc.splitTextToSize(name,80).slice(0,3);
+    const rowH=Math.max(10,wrapped.length*4.2+5);
+    if(y+rowH>225){doc.addPage();drawHeader();y=55;drawTableHead(y);y+=14;}
+    if(idx%2===0){doc.setFillColor(244,248,252);doc.rect(left,y-6,usable,rowH,'F');}
+    doc.setDrawColor(205,216,227);doc.setLineWidth(.2);doc.line(left,y+rowH-6,right,y+rowH-6);
+    doc.setTextColor(...navy);doc.setFont('helvetica','normal');
+    doc.text(String(idx+1),left+4,y);
+    doc.text(wrapped,left+15,y);
+    doc.text(String(Number(l.qte)||0),131,y,{align:'right'});
+    doc.text(money(l.prix),163,y,{align:'right'});
+    doc.setFont('helvetica','bold');doc.text(money((Number(l.qte)||0)*(Number(l.prix)||0)),right-3,y,{align:'right'});
+    y+=rowH;
+  });
+
+  // Zone récapitulatif : QR à gauche, totaux à droite
+  y+=5;
+  doc.setDrawColor(190,205,220);doc.setLineWidth(.4);doc.line(left,y,right,y);y+=6;
+  const above=[]; if(showBreakdown&&lines.length)above.push(['Sous-total',money(sousTotal)]); if(showBreakdown&&remise>0)above.push(['Remise','- '+money(remise)]);
+  const below=[]; if(acompte>0){below.push(['Acompte versé',money(acompte)]);below.push(['Reste à payer',money(reste)]);}
+  const totH=above.length*6+13+(below.length?below.length*6+2:0);
+  const bandH=Math.max(38,totH);
+  if(y+bandH+26>262){doc.addPage();drawHeader();y=55;}
+  const top=y;
+  // Totaux
+  let ty=top;
+  const row=(label,val,bold)=>{doc.setFont('helvetica',bold?'bold':'normal');doc.setFontSize(8.5);doc.setTextColor(...navy);doc.text(label,116,ty+4);doc.text(val,194,ty+4,{align:'right'});ty+=6;};
+  above.forEach(([a,b])=>row(a,b,false));
+  doc.setFillColor(...navy);doc.roundedRect(112,ty,85,13,2,2,'F');doc.setFillColor(...gold);doc.roundedRect(151,ty,46,13,2,2,'F');
+  doc.setTextColor(255,255,255);doc.setFont('helvetica','bold');doc.setFontSize(8);doc.text('TOTAL À PAYER',116,ty+8);
+  const amt=money(total);let fs=11;doc.setFontSize(fs);while(doc.getTextWidth(amt)>40&&fs>7){fs-=0.5;doc.setFontSize(fs);}
+  doc.setTextColor(...navy);doc.text(amt,194,ty+8.3,{align:'right'});
+  ty+=13+2;
+  below.forEach(([a,b],i)=>row(a,b,i===below.length-1));
+  // QR de vérification (à gauche, même bande que les totaux)
+  if(qrUrl){
+    doc.setFillColor(255,255,255);doc.setDrawColor(210,223,236);doc.roundedRect(left,top,32,32,2,2,'FD');
+    doc.addImage(qrUrl,'PNG',left+2,top+2,28,28);
+    doc.setFont('helvetica','bold');doc.setFontSize(5.5);doc.setTextColor(...navy);doc.text('SCANNER POUR VÉRIFIER',left+16,top+36,{align:'center'});
+  }
+  doc.setFont('helvetica','normal');doc.setFontSize(7.5);doc.setTextColor(80,95,110);
+  doc.text(doc.splitTextToSize('Merci de rappeler le numéro de facture '+invoiceNo+' lors de tout règlement ou réclamation.',54),52,top+5);
+  y=top+Math.max(bandH,38)+8;
+
+  // Remerciements
+  if(y+14>270){doc.addPage();drawHeader();y=55;}
+  doc.setDrawColor(...gold);doc.setLineWidth(.8);doc.line(left,y,right,y);y+=8;
+  doc.setFont('helvetica','italic');doc.setFontSize(11);doc.setTextColor(...navy);doc.text('Merci pour votre confiance !',pageW/2,y,{align:'center'});
+  doc.setFont('helvetica','normal');doc.setFontSize(7.5);doc.setTextColor(80,95,110);
+  doc.text('Nous vous remercions pour votre fidélité. Au plaisir de vous revoir.',pageW/2,y+6,{align:'center'});
+
+  // Pied de page sur toutes les pages + numérotation
+  const pages=doc.internal.getNumberOfPages();
+  for(let i=1;i<=pages;i++){
+    doc.setPage(i);
+    doc.setFillColor(...navy);doc.rect(0,283,pageW,14,'F');doc.setFillColor(...gold);doc.rect(0,283,pageW,1.2,'F');
+    doc.setTextColor(255,255,255);doc.setFont('helvetica','normal');doc.setFontSize(7);
+    doc.text("ETS N'GUILLA & FRÈRES  |  République de Guinée  |  Tél. "+CONTACT.tel,pageW/2,290,{align:'center'});
+    doc.text(CONTACT.mail+'  •  '+CONTACT.web,pageW/2,294,{align:'center'});
+    doc.setTextColor(148,163,184);doc.setFontSize(7);
+    doc.text(`${invoiceNo} • Page ${i}/${pages}`,right,279,{align:'right'});
+  }
+  doc.save('Facture_'+String(v.num||v.id)+'_'+new Date().toISOString().slice(0,10)+'.pdf');
+  toast('Facture PDF générée','success');
+  if(typeof logAction==='function')logAction('CREATE','Facture PDF : '+(v.num||v.id));
 }
 
 // ═══════════════════════════════
 //  QR CODE / ÉTIQUETTE PRODUIT
 // ═══════════════════════════════
+async function printProduitsPDF(){
+  // Liste imprimable : filtre actuel de la page Produits, sinon tous les produits.
+  const filtered=gf('p');
+  const items=(filtered.length?filtered:(D.produits||[])).slice();
+  if(!items.length){toast('Aucun produit à imprimer','error');return;}
+  if(!window.jspdf?.jsPDF){toast('Le module PDF est indisponible. Vérifiez votre connexion puis réessayez.','error');return;}
+  const {jsPDF}=window.jspdf,doc=new jsPDF({unit:'mm',format:'a4',orientation:'landscape'});
+  const navy=[8,55,105],gold=[255,190,0],pale=[244,248,252],red=[185,28,28],green=[21,128,61];
+  const pageW=297,pageH=210,left=10,right=287,bottomLimit=190;
+  const num=n=>(Math.round(Number(n)||0)).toLocaleString('fr-FR').replace(/[  ]/g,' ');
+  const safeText=t=>String(t??'—').replace(/[\r\n]+/g,' ').trim();
+  const today=new Date().toLocaleDateString('fr-FR');
+  const totalPages=()=>doc.internal.getNumberOfPages();
+
+  // QR de chaque produit (même contenu que l'étiquette produit). Préparés avant le dessin.
+  const qrByProd=new Map();
+  try{
+    let ready=typeof QRCode!=='undefined'&&typeof QRCode.toDataURL==='function';
+    if(!ready&&typeof ensureQRCode==='function')ready=await ensureQRCode();
+    if(ready&&typeof QRCode.toDataURL==='function'){
+      for(const p of items){
+        const payload=JSON.stringify({id:p.id,code:p.code,nom:p.designation,prix:p.vente,unite:p.unite||'u'});
+        try{qrByProd.set(p.id,await QRCode.toDataURL(payload,{width:200,margin:1,errorCorrectionLevel:'M',color:{dark:'#000000',light:'#ffffff'}}));}
+        catch(e){console.error('QR produit',p.code,e);}
+      }
+    } else console.warn('QR produits non générés : bibliothèque QR indisponible.');
+  }catch(e){console.error('Erreur génération QR produits',e);}
+
+  const drawHeader=()=>{
+    doc.setFillColor(...navy);doc.rect(0,0,pageW,22,'F');doc.setFillColor(...gold);doc.rect(0,22,pageW,1.6,'F');
+    doc.setTextColor(255,255,255);doc.setFont('helvetica','bold');doc.setFontSize(15);doc.text("ETS N'GUILLA & FRÈRES",left,11);
+    doc.setFont('helvetica','normal');doc.setFontSize(8);doc.text('Liste des produits : prix, dépenses et bénéfices',left,17);
+    doc.setTextColor(...gold);doc.setFont('helvetica','bold');doc.setFontSize(9);
+    doc.text(`Édité le ${today}  •  ${items.length} produit(s)`,right,11,{align:'right'});
+  };
+  const drawTableHead=y=>{
+    doc.setFillColor(...navy);doc.rect(left,y,right-left,10,'F');
+    doc.setFont('helvetica','bold');doc.setFontSize(7.5);doc.setTextColor(255,255,255);
+    doc.text('QR',19,y+6.5,{align:'center'});
+    doc.text('CODE',30,y+6.5);
+    doc.text('DÉSIGNATION',54,y+6.5);
+    doc.text('PRIX ACHAT',112+24,y+6.5,{align:'right'});
+    doc.text('PRIX VENTE',160,y+6.5,{align:'right'});
+    doc.text('BÉNÉF./U',184,y+6.5,{align:'right'});
+    doc.text('MARGE',198,y+6.5,{align:'right'});
+    doc.text('STOCK',212,y+6.5,{align:'right'});
+    doc.text('DÉPENSE',245,y+6.5,{align:'right'});
+    doc.text('BÉNÉF. POTENTIEL',right-1,y+6.5,{align:'right'});
+    doc.setFillColor(...gold);doc.rect(left,y+10,right-left,0.8,'F');
+  };
+  const drawFooter=()=>{
+    const n=totalPages();
+    for(let i=1;i<=n;i++){
+      doc.setPage(i);
+      doc.setFont('helvetica','normal');doc.setFontSize(6.5);doc.setTextColor(100,116,139);
+      doc.text('Dépense = prix d’achat × stock  •  Bénéf./u = prix de vente − prix d’achat  •  Bénéf. potentiel = bénéf./u × stock  •  Marge = bénéf./u ÷ prix de vente  •  Montants en GNF',left,203);
+      doc.text(`Page ${i}/${n}`,right,203,{align:'right'});
+    }
+  };
+
+  drawHeader();
+  let y=30;drawTableHead(y);y+=12;
+  let totStock=0,totDepense=0,totPotentiel=0;
+
+  for(let i=0;i<items.length;i++){
+    const p=items[i];
+    const achat=Number(p.achat)||0,vente=Number(p.vente)||0,stock=Math.max(0,Number(p.stock)||0);
+    const benefU=vente-achat,marge=vente>0?(benefU/vente)*100:0;
+    const depense=achat*stock,potentiel=benefU*stock;
+    totStock+=stock;totDepense+=depense;totPotentiel+=potentiel;
+    const rowH=20;
+    if(y+rowH>bottomLimit){doc.addPage();drawHeader();y=30;drawTableHead(y);y+=12;}
+    if(i%2===0){doc.setFillColor(...pale);doc.rect(left,y,right-left,rowH,'F');}
+    doc.setDrawColor(205,216,227);doc.setLineWidth(.2);doc.line(left,y+rowH,right,y+rowH);
+
+    // QR
+    const qr=qrByProd.get(p.id);
+    if(qr)doc.addImage(qr,'PNG',left+1,y+1,18,18);
+    else{doc.setDrawColor(210,223,236);doc.rect(left+1,y+1,18,18);doc.setFont('helvetica','normal');doc.setFontSize(5.5);doc.setTextColor(100,116,139);doc.text('QR indispo.',left+10,y+11,{align:'center'});}
+
+    doc.setTextColor(...navy);doc.setFont('helvetica','bold');doc.setFontSize(8);
+    doc.text(safeText(p.code),30,y+11);
+    doc.setFont('helvetica','normal');doc.setFontSize(8.5);
+    const name=doc.splitTextToSize(safeText(p.designation),56).slice(0,2);
+    doc.text(name,54,name.length>1?y+8:y+11);
+    if(p.unite){doc.setFontSize(6.5);doc.setTextColor(100,116,139);doc.text('Unité : '+safeText(p.unite),54,y+17);}
+
+    doc.setFontSize(8.5);doc.setTextColor(...navy);
+    doc.text(num(achat),136,y+11,{align:'right'});
+    doc.text(num(vente),160,y+11,{align:'right'});
+    doc.setTextColor(...(benefU<0?red:navy));doc.text(num(benefU),184,y+11,{align:'right'});
+    doc.setTextColor(...(marge<0?red:navy));doc.text(marge.toFixed(1).replace('.',',')+' %',198,y+11,{align:'right'});
+    doc.setTextColor(...navy);doc.text(String(stock),212,y+11,{align:'right'});
+    doc.text(num(depense),245,y+11,{align:'right'});
+    doc.setFont('helvetica','bold');doc.setTextColor(...(potentiel<0?red:green));doc.text(num(potentiel),right-1,y+11,{align:'right'});
+    y+=rowH;
+  }
+
+  // Ligne de totaux
+  if(y+10>bottomLimit){doc.addPage();drawHeader();y=30;drawTableHead(y);y+=12;}
+  y+=2;
+  doc.setFillColor(...navy);doc.rect(left,y,right-left,10,'F');
+  doc.setFillColor(...gold);doc.rect(left,y+10,right-left,0.8,'F');
+  doc.setTextColor(255,255,255);doc.setFont('helvetica','bold');doc.setFontSize(8.5);
+  doc.text('TOTAL',54,y+6.5);
+  doc.text(num(totStock),212,y+6.5,{align:'right'});
+  doc.text(num(totDepense),245,y+6.5,{align:'right'});
+  doc.text(num(totPotentiel),right-1,y+6.5,{align:'right'});
+
+  drawFooter();
+  doc.save('Liste_produits_'+new Date().toISOString().slice(0,10)+'.pdf');
+  toast('Liste des produits générée','success');
+  if(typeof logAction==='function')logAction('CREATE','Liste produits PDF ('+items.length+')');
+}
+
 let currentQRProd=null;
 function openBarcode(pid){
   const p=D.produits.find(x=>x.id===pid);if(!p)return;
@@ -3788,12 +4065,13 @@ function rdClients(){
   });
   document.getElementById('tb-clients').innerHTML=fil.length?fil.map(c=>`<tr>
     <td><b>${esc(c.nom)}</b><br><span style="font-size:10.5px;color:var(--text3)">${esc(c.adresse||'—')}</span></td>
-    <td style="font-family:'DM Mono',monospace;font-size:12px">${esc(c.tel||'—')}</td>
+    <td style="font-family:'DM Mono',monospace;font-size:12px">${esc(c.tel||'—')}${c.email?`<br><span style="font-size:10.5px;color:var(--text3);font-family:inherit">${esc(c.email)}</span>`:''}</td>
     <td style="font-family:'DM Mono',monospace;font-weight:700;color:${c.dette>0?'var(--red)':'var(--green)'};">${gnf(c.dette||0)}</td>
     <td style="font-size:11px;color:var(--text3)">${c.last_vente||'—'}</td>
     <td><span class="tag ${c.dette>0?'rupture':'normal'}">${c.dette>0?'Débiteur':'Soldé'}</span></td>
     <td style="white-space:nowrap">
       ${c.dette>0?`<button class="btn btn-success btn-sm" onclick="openRemb(${c.id})">💵 Rembourser</button>`:''}
+      ${c.sms_ok===false?'':`<button class="btn btn-outline btn-sm" title="Notifier (SMS, WhatsApp, e-mail)" onclick="SMSC.compose('${c.id}','${c.dette>0?'relance':'libre'}')">📨</button>`}
       <button class="btn btn-outline btn-sm" onclick="editClient(${c.id})">✏️</button>
       <button class="btn btn-danger btn-sm" onclick="delClient(${c.id})">🗑️</button>
     </td>
@@ -3809,13 +4087,15 @@ function openNewClient(){
   const el=document.getElementById('cl-id');if(el)el.value='';
   const t=document.getElementById('m-client-title');if(t)t.textContent='👤 Nouveau Client';
   ['cl-nom','cl-tel','cl-adr','cl-note'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});
+  const sm=document.getElementById('cl-sms');if(sm)sm.checked=true;
+  const em0=document.getElementById('cl-email');if(em0)em0.value='';const cn0=document.getElementById('cl-canal');if(cn0)cn0.value='sms';
   openM('m-client');
 }
-function editClient(id){const c=D.clients.find(x=>x.id===id);if(!c)return;document.getElementById('cl-id').value=id;document.getElementById('m-client-title').textContent='✏️ Modifier Client';document.getElementById('cl-nom').value=c.nom;document.getElementById('cl-tel').value=c.tel||'';document.getElementById('cl-adr').value=c.adresse||'';document.getElementById('cl-note').value=c.notes||'';openM('m-client');}
+function editClient(id){const c=D.clients.find(x=>x.id===id);if(!c)return;document.getElementById('cl-id').value=id;document.getElementById('m-client-title').textContent='✏️ Modifier Client';document.getElementById('cl-nom').value=c.nom;document.getElementById('cl-tel').value=c.tel||'';document.getElementById('cl-adr').value=c.adresse||'';document.getElementById('cl-note').value=c.notes||'';const sm=document.getElementById('cl-sms');if(sm)sm.checked=c.sms_ok!==false;const em=document.getElementById('cl-email');if(em)em.value=c.email||'';const cn=document.getElementById('cl-canal');if(cn)cn.value=c.canal||'sms';openM('m-client');}
 function saveClient(){
   const nom=document.getElementById('cl-nom').value.trim();if(!nom){toast('Nom requis','error');return;}
   const id=document.getElementById('cl-id').value;
-  const data={nom,tel:document.getElementById('cl-tel').value,adresse:document.getElementById('cl-adr').value,notes:document.getElementById('cl-note').value};
+  const data={nom,tel:document.getElementById('cl-tel').value,adresse:document.getElementById('cl-adr').value,notes:document.getElementById('cl-note').value,sms_ok:document.getElementById('cl-sms')?document.getElementById('cl-sms').checked:true,email:(document.getElementById('cl-email')?document.getElementById('cl-email').value:'').trim(),canal:document.getElementById('cl-canal')?document.getElementById('cl-canal').value:'sms'};
   if(id){const i=D.clients.findIndex(x=>x.id==id);if(i>=0)D.clients[i]={...D.clients[i],...data};logAction('UPDATE','Client modifié: '+nom);}
   else{D.clients.push({id:nid('clients'),dette:0,created_at:new Date().toISOString().slice(0,10),...data});logAction('CREATE','Nouveau client: '+nom);}
   localStorage.setItem('db_cl',JSON.stringify(D.clients));closeM('m-client');rdClients();fillClientSelects();toast('Client enregistré','success');
@@ -3940,7 +4220,7 @@ async function posEncaisser(){
   const now=new Date().toISOString().slice(0,16).replace('T',' ');
   const lignes=POS_CART.map(l=>{const p=D.produits.find(x=>String(x.id)===String(l.produit_id));return {...l,cout_achat:Number(p?.achat)||0};});
   const nv={id:nid('ventes'),num:'VTE-'+new Date().getFullYear()+'-'+nseq('ventes'),date:now,
-    articles:lignes.length,montant:tot,paiement:pay==='credit'?'Crédit':pay,statut:'finalisee',lignes,client_id:clientId};
+    articles:lignes.length,montant:tot,paiement:pay==='credit'?'Crédit':pay,statut:'finalisee',lignes,client_id:clientId,remise:rem,acompte,user:CU?.nom||'Caissier'};
   D.ventes.unshift(nv);
   for(const l of lignes){
     const p=D.produits.find(x=>String(x.id)===String(l.produit_id));if(p)p.stock=Number(p.stock||0)-Number(l.qte);
@@ -4359,89 +4639,264 @@ function setRptPeriod(per,btn){
   refreshRapports();
 }
 
+// ═══════════════════════════════
+//  RAPPORTS : calcul unique (écran, Excel, PDF)
+// ═══════════════════════════════
+// Règles :
+// - CA net = ventes − remboursements des retours traités.
+// - Coût des ventes = coût d'achat des lignes vendues − coût des retours remis en stock.
+// - Marge brute = CA net − coût des ventes.
+// - Charges = dépenses hors « achat stock » (le coût des marchandises est déjà dans la marge).
+// - Résultat net = marge brute − charges.
+// - Achats de stock et pertes sont des mémos (trésorerie / casse), pas déduits deux fois.
+function rptPrev(from,to){
+  const f=new Date(from+'T00:00:00Z'),t=new Date(to+'T00:00:00Z');
+  const len=Math.round((t-f)/864e5)+1;
+  const pt=new Date(f.getTime()-864e5),pf=new Date(pt.getTime()-(len-1)*864e5);
+  return {from:pf.toISOString().slice(0,10),to:pt.toISOString().slice(0,10)};
+}
+function calcPeriode(from,to){
+  const inP=d=>{const s=String(d||'').slice(0,10);return s>=from&&s<=to;};
+  const prodOf=id=>(D.produits||[]).find(x=>String(x.id)===String(id));
+  const vP=(D.ventes||[]).filter(v=>inP(v.date));
+  const dP=(D.depenses||[]).filter(d=>inP(d.date));
+  const mP=(D.mouvements||[]).filter(m=>inP(m.date));
+  const rTr=(D.retours||[]).filter(r=>inP(r.date)&&r.statut==='traite');
+
+  const retMnt=rTr.reduce((s,r)=>s+(Number(r.montant)||0),0);
+  const caBrut=vP.reduce((s,v)=>s+(Number(v.montant)||0),0);
+  const caNet=caBrut-retMnt;
+
+  const parProd={};let cogsVentes=0;
+  vP.forEach(v=>(v.lignes||[]).forEach(l=>{
+    const p=prodOf(l.produit_id);
+    const cout=(l.cout_achat!=null)?Number(l.cout_achat):(Number(p?.achat)||0);
+    const qte=Number(l.qte)||0,prix=Number(l.prix)||0;
+    const cle=String(l.produit_id??l.produit);
+    const o=parProd[cle]||(parProd[cle]={nom:l.produit||p?.designation||'—',qte:0,ca:0,cout:0});
+    o.qte+=qte;o.ca+=qte*prix;o.cout+=qte*cout;
+    cogsVentes+=qte*cout;
+  }));
+  // Retours remis en stock : la marchandise revient au stock, son coût sort du coût des ventes.
+  let cogsRetours=0;
+  rTr.filter(r=>r.stock==='oui').forEach(r=>{const p=prodOf(r.produit_id);cogsRetours+=(Number(r.qte)||0)*(Number(p?.achat)||0);});
+  const coutVentes=cogsVentes-cogsRetours;
+  const margeBrute=caNet-coutVentes;
+  const tauxMarge=caNet>0?margeBrute/caNet*100:0;
+
+  const achatsStock=dP.filter(d=>d.categorie==='achat_stock').reduce((s,d)=>s+(Number(d.montant)||0),0);
+  const charges=dP.filter(d=>d.categorie!=='achat_stock');
+  const chargesTotal=charges.reduce((s,d)=>s+(Number(d.montant)||0),0);
+  const chargesCat={};charges.forEach(d=>{const k=d.categorie||'autre';chargesCat[k]=(chargesCat[k]||0)+(Number(d.montant)||0);});
+  const resultatNet=margeBrute-chargesTotal;
+
+  const pertesMvt=mP.filter(m=>m.type==='perte');
+  const pertes=pertesMvt.reduce((s,m)=>{const p=prodOf(m.produit_id)||(D.produits||[]).find(x=>x.designation===m.produit);return s+(Number(m.qte)||0)*(Number(p?.achat)||Number(m.prix)||0);},0);
+
+  const produits=D.produits||[];
+  const valeurStock=produits.reduce((s,p)=>s+(Number(p.stock)||0)*(Number(p.achat)||0),0);
+  const rotation=valeurStock>0?coutVentes/valeurStock:0;
+  const ruptures=produits.filter(p=>(Number(p.stock)||0)<=0).length;
+  const sousMin=produits.filter(p=>{const s=Number(p.stock)||0;return s>0&&s<(Number(p.min)||0);}).length;
+  const nomsVendus=new Set(Object.values(parProd).map(o=>o.nom));
+  const idsVendus=new Set(Object.keys(parProd));
+  const sansVente=produits.filter(p=>(Number(p.stock)||0)>0&&!idsVendus.has(String(p.id))&&!nomsVendus.has(p.designation)).length;
+
+  const parPaiement={},parCaissier={};
+  vP.forEach(v=>{
+    const m=Number(v.montant)||0,pay=v.paiement||'—',u=v.user||'Non renseigné';
+    parPaiement[pay]=(parPaiement[pay]||0)+m;
+    parCaissier[u]=parCaissier[u]||{n:0,montant:0};parCaissier[u].n++;parCaissier[u].montant+=m;
+  });
+  const credit=vP.filter(v=>String(v.paiement||'').toLowerCase().startsWith('cr'));
+  const creditPeriode=credit.reduce((s,v)=>s+(Number(v.montant)||0)-(Number(v.acompte)||0),0);
+  const debiteurs=(D.clients||[]).filter(c=>(Number(c.dette)||0)>0).sort((a,b)=>b.dette-a.dette);
+  const totalDettes=debiteurs.reduce((s,c)=>s+Number(c.dette),0);
+
+  const nbVentes=vP.length;
+  const panier=nbVentes?caNet/nbVentes:0;
+  const topMarge=Object.values(parProd).map(o=>({...o,marge:o.ca-o.cout})).sort((a,b)=>b.marge-a.marge).slice(0,10);
+
+  return {from,to,nbVentes,caBrut,retMnt,caNet,cogsVentes,cogsRetours,coutVentes,margeBrute,tauxMarge,
+    achatsStock,chargesTotal,chargesCat,resultatNet,pertes,nbPertes:pertesMvt.length,
+    valeurStock,rotation,ruptures,sousMin,sansVente,nbRetours:rTr.length,
+    parPaiement,parCaissier,creditPeriode,debiteurs,totalDettes,panier,topMarge,
+    vP,dP:charges,mP};
+}
+
+// Variation en % entre période courante et précédente, texte court pour les KPI.
+function rptEvo(a,b){
+  if(!b){return a?'nouveau':'—';}
+  const p=(a-b)/Math.abs(b)*100;
+  return (p>=0?'▲ +':'▼ ')+p.toFixed(0)+' %';
+}
+function rptEvoCls(a,b){return !b?'delta-ne':(a>=b?'delta-up':'delta-dn');}
+
+function rdRapportDetails(r,pv){
+  const money=n=>gnf(Math.round(Number(n)||0));
+  const esc2=t=>esc(String(t??'—'));
+  const row=(label,cur,prev,opt={})=>{
+    const cls=opt.noEvo?'':rptEvoCls(cur,prev);
+    return `<tr style="${opt.bold?'font-weight:700':''}"><td>${esc2(label)}</td><td style="text-align:right;font-family:'DM Mono',monospace;${opt.color?'color:'+opt.color:''}">${money(cur)}</td><td style="text-align:right;font-family:'DM Mono',monospace;color:var(--text3)">${money(prev)}</td><td style="text-align:right;font-size:11px"><span class="${cls}">${opt.noEvo?'':rptEvo(cur,prev)}</span></td></tr>`;
+  };
+  const cmp=(id,html)=>{const e=document.getElementById(id);if(e)e.innerHTML=html;};
+  const mg=r.margeBrute>=0?'var(--green)':'var(--red)',rn=r.resultatNet>=0?'var(--green)':'var(--red)';
+
+  cmp('rpt-compte',`<table><thead><tr><th>Libellé</th><th style="text-align:right">Période</th><th style="text-align:right">Préc.</th><th style="text-align:right">Évol.</th></tr></thead><tbody>
+    ${row('CA brut (ventes)',r.caBrut,pv.caBrut)}
+    ${row('− Remboursements (retours traités)',-r.retMnt,-pv.retMnt,{noEvo:true})}
+    ${row('= Chiffre d’affaires net',r.caNet,pv.caNet,{bold:true})}
+    ${row('− Coût des marchandises vendues',-r.coutVentes,-pv.coutVentes,{noEvo:true})}
+    ${row('= Marge brute',r.margeBrute,pv.margeBrute,{bold:true,color:mg})}
+    <tr><td>Taux de marge (% du CA net)</td><td style="text-align:right;font-family:'DM Mono',monospace">${Math.round(r.tauxMarge)} %</td><td style="text-align:right;font-family:'DM Mono',monospace;color:var(--text3)">${Math.round(pv.tauxMarge)} %</td><td></td></tr>
+    ${row('− Charges (hors achats de stock)',-r.chargesTotal,-pv.chargesTotal,{noEvo:true})}
+    ${row('= Résultat net',r.resultatNet,pv.resultatNet,{bold:true,color:rn})}
+    <tr><td colspan="4" style="font-size:10.5px;color:var(--text3);padding-top:8px">Mémos (non déduits) : achats de stock ${money(r.achatsStock)} · pertes et casse ${money(r.pertes)}</td></tr>
+  </tbody></table>`);
+
+  cmp('rpt-creances',`<div style="display:flex;gap:18px;flex-wrap:wrap;margin-bottom:10px">
+      <div><div style="font-size:11px;color:var(--text3)">Total des dettes clients</div><div style="font-size:18px;font-weight:800;color:var(--orange)">${money(r.totalDettes)}</div></div>
+      <div><div style="font-size:11px;color:var(--text3)">Débiteurs</div><div style="font-size:18px;font-weight:800">${r.debiteurs.length}</div></div>
+      <div><div style="font-size:11px;color:var(--text3)">Ventes à crédit (période)</div><div style="font-size:18px;font-weight:800">${money(r.creditPeriode)}</div></div>
+    </div>
+    <div class="tw"><table><thead><tr><th>Client</th><th>Téléphone</th><th style="text-align:right">Dette</th></tr></thead><tbody>
+    ${r.debiteurs.slice(0,8).map(c=>`<tr><td>${esc2(c.nom)}</td><td>${esc2(c.tel||'—')}</td><td style="text-align:right;font-family:'DM Mono',monospace;color:var(--orange)">${money(c.dette)}</td></tr>`).join('')||'<tr><td colspan="3" style="text-align:center;color:var(--text3)">Aucune créance</td></tr>'}
+    </tbody></table></div>`);
+
+  const payRows=Object.entries(r.parPaiement).sort((a,b)=>b[1]-a[1]).map(([k,v])=>`<tr><td>${esc2(k)}</td><td style="text-align:right;font-family:'DM Mono',monospace">${money(v)}</td><td style="text-align:right">${r.caBrut?Math.round(v/r.caBrut*100):0} %</td></tr>`).join('')||'<tr><td colspan="3" style="text-align:center;color:var(--text3)">Aucune vente</td></tr>';
+  const cashRows=Object.entries(r.parCaissier).sort((a,b)=>b[1].montant-a[1].montant).map(([k,v])=>`<tr><td>${esc2(k)}</td><td style="text-align:right">${v.n}</td><td style="text-align:right;font-family:'DM Mono',monospace">${money(v.montant)}</td></tr>`).join('')||'<tr><td colspan="3" style="text-align:center;color:var(--text3)">Aucune vente</td></tr>';
+  cmp('rpt-paiements',`<div class="tw"><table><thead><tr><th>Mode de paiement</th><th style="text-align:right">Montant</th><th style="text-align:right">Part</th></tr></thead><tbody>${payRows}</tbody></table></div>
+    <div class="tw" style="margin-top:12px"><table><thead><tr><th>Caissier</th><th style="text-align:right">Ventes</th><th style="text-align:right">Montant</th></tr></thead><tbody>${cashRows}</tbody></table></div>
+    <div style="margin-top:8px;font-size:11px;color:var(--text3)">Panier moyen : ${money(r.panier)} · Remboursements : ${r.nbRetours} retour(s) traité(s)</div>`);
+
+  const catRows=Object.entries(r.chargesCat).sort((a,b)=>b[1]-a[1]).map(([k,v])=>`<tr><td>${esc2((typeof DP_CAT_UI!=='undefined'&&DP_CAT_UI[k])||k)}</td><td style="text-align:right;font-family:'DM Mono',monospace">${money(v)}</td><td style="text-align:right">${r.chargesTotal?Math.round(v/r.chargesTotal*100):0} %</td></tr>`).join('')||'<tr><td colspan="3" style="text-align:center;color:var(--text3)">Aucune charge</td></tr>';
+  cmp('rpt-charges',`<div class="tw"><table><thead><tr><th>Catégorie</th><th style="text-align:right">Montant</th><th style="text-align:right">Part</th></tr></thead><tbody>${catRows}</tbody></table></div>
+    <div style="margin-top:12px;display:flex;gap:10px;flex-wrap:wrap;font-size:12px">
+      <span class="tag" style="background:var(--orange-glow);color:var(--orange)">Ruptures : ${r.ruptures}</span>
+      <span class="tag" style="background:var(--orange-glow);color:var(--orange)">Sous minimum : ${r.sousMin}</span>
+      <span class="tag" style="background:var(--blue-glow);color:var(--blue)">En stock, sans vente sur la période : ${r.sansVente}</span>
+    </div>`);
+
+  cmp('rpt-topmarge',`<table><thead><tr><th>Produit</th><th style="text-align:right">Qté vendue</th><th style="text-align:right">CA</th><th style="text-align:right">Coût</th><th style="text-align:right">Marge GNF</th><th style="text-align:right">Taux</th></tr></thead><tbody>
+    ${r.topMarge.map(o=>`<tr><td><b>${esc2(o.nom)}</b></td><td style="text-align:right">${o.qte}</td><td style="text-align:right;font-family:'DM Mono',monospace">${money(o.ca)}</td><td style="text-align:right;font-family:'DM Mono',monospace;color:var(--text3)">${money(o.cout)}</td><td style="text-align:right;font-family:'DM Mono',monospace;font-weight:700;color:${o.marge>=0?'var(--green)':'var(--red)'}">${money(o.marge)}</td><td style="text-align:right">${o.ca?Math.round(o.marge/o.ca*100):0} %</td></tr>`).join('')||'<tr><td colspan="6" style="text-align:center;color:var(--text3)">Aucune vente sur la période</td></tr>'}
+    </tbody></table>`);
+}
+
 function refreshRapports(){
   const {from,to}=getRptDates();
-  // Label période
   const lbl=document.getElementById('rpt-period-label');
   if(lbl)lbl.textContent=`Données du ${from} au ${to}`;
+  const r=calcPeriode(from,to);
+  const pr=rptPrev(from,to),pv=calcPeriode(pr.from,pr.to);
+  const set=(id,t)=>{const e=document.getElementById(id);if(e)e.textContent=t;};
+  const setCls=(id,cls)=>{const e=document.getElementById(id);if(e)e.className='kpi-delta '+cls;};
 
-  // Filtres sur la période
-  const inPeriod=(dateStr)=>{const d=(dateStr||'').slice(0,10);return d>=from&&d<=to;};
-  const vP=D.ventes.filter(v=>inPeriod(v.date));
-  const dP=D.depenses.filter(d=>inPeriod(d.date));
-  const mP=D.mouvements.filter(m=>inPeriod(m.date));
-  const rP=D.retours.filter(r=>inPeriod(r.date));
+  set('r-ca',gnf(r.caNet));
+  set('r-ca-nb',`${r.nbVentes} vente${r.nbVentes>1?'s':''} · ${rptEvo(r.caNet,pv.caNet)} vs préc.`);
+  setCls('r-ca-nb',rptEvoCls(r.caNet,pv.caNet));
 
-  // CA période
-  const retMnt=rP.filter(r=>r.statut==='traite').reduce((s,r)=>s+(Number(r.montant)||0),0);
-  const caBrut=vP.reduce((s,v)=>s+(Number(v.montant)||0),0);
-  const caP=caBrut-retMnt;
-  document.getElementById('r-ca').textContent=gnf(caP);
-  document.getElementById('r-ca-nb').textContent=vP.length+' vente'+(vP.length>1?'s':'');
+  set('r-mg',gnf(r.margeBrute));
+  set('r-mg-pct',`Taux : ${Math.round(r.tauxMarge)}% · ${rptEvo(r.margeBrute,pv.margeBrute)}`);
+  setCls('r-mg-pct',r.tauxMarge>=20?'delta-up':r.tauxMarge>=10?'delta-ne':'delta-dn');
 
-  // Marge brute sur la période
-  let caLignes=0,coutLignes=0;
-  vP.forEach(v=>{
-    const lignes=v.lignes||[];
-    // Le montant de la vente inclut déjà la remise éventuelle : l’utiliser évite de surestimer la marge.
-    caLignes+=Number(v.montant)||0;
-    lignes.forEach(l=>{
-      const p=D.produits.find(x=>String(x.id)===String(l.produit_id));
-      const cout=(l.cout_achat!==undefined&&l.cout_achat!==null)?Number(l.cout_achat):(Number(p?.achat)||0);
-      coutLignes+=Number(l.qte||0)*cout;
-    });
-  });
-  const mgBrute=caLignes-coutLignes-retMnt;
-  const mgPct=caLignes>0?Math.round(mgBrute/caLignes*100):0;
-  document.getElementById('r-mg').textContent=gnf(mgBrute);
-  const mgEl2=document.getElementById('r-mg-pct');
-  if(mgEl2){mgEl2.textContent='Taux: '+mgPct+'%';mgEl2.className='kpi-delta '+(mgPct>=20?'delta-up':mgPct>=10?'delta-ne':'delta-dn');}
+  set('r-dep',gnf(r.chargesTotal));
+  set('r-ben-net',`Résultat net : ${gnf(r.resultatNet)}`);
+  setCls('r-ben-net',r.resultatNet>=0?'delta-up':'delta-dn');
 
-  // Dépenses
-  const depP=dP.reduce((s,d)=>s+d.montant,0);
-  document.getElementById('r-dep').textContent=gnf(depP);
-  const benNet=mgBrute-depP;
-  const benEl=document.getElementById('r-ben-net');
-  if(benEl){benEl.textContent='Marge après dépenses: '+(gnf(benNet));benEl.className='kpi-delta '+(benNet>=0?'delta-up':'delta-dn');}
+  set('r-prt',gnf(r.pertes));
+  set('r-prt-nb',`${r.nbPertes} entrée${r.nbPertes>1?'s':''}`);
 
-  // Pertes réelles
-  const prtMvt=mP.filter(m=>m.type==='perte');
-  let prtVal=0;
-  prtMvt.forEach(m=>{
-    const p=D.produits.find(x=>x.id===m.produit_id||x.designation===m.produit);
-    prtVal+=m.qte*(p?.achat||m.prix||0);
-  });
-  document.getElementById('r-prt').textContent=gnf(prtVal);
-  const prtNb=document.getElementById('r-prt-nb');
-  if(prtNb)prtNb.textContent=prtMvt.length+' entrée'+(prtMvt.length>1?'s':'');
+  set('r-val',gnf(r.valeurStock));
+  set('r-rot',r.rotation.toFixed(2));
+  set('r-rot-lbl','coût ventes ÷ valeur stock');
 
-  // Valeur stock
-  const val=D.produits.reduce((s,p)=>s+(Number(p.stock)||0)*(Number(p.achat)||0),0);
-  document.getElementById('r-val').textContent=Math.round(val).toLocaleString('fr-FR').replace(/[\u202F\u00A0]/g, ' ')+' GNF';
+  set('r-ret',gnf(r.retMnt));
+  set('r-ret-nb',`${r.nbRetours} retour${r.nbRetours>1?'s':''} traité${r.nbRetours>1?'s':''}`);
 
-  // Rotation stock = sorties période / stock moyen actuel
-  const sortiesQte=mP.filter(m=>m.type==='sortie').reduce((s,m)=>s+m.qte,0);
-  const stockMoyen=D.produits.reduce((s,p)=>s+p.stock,0)||1;
-  const rot=sortiesQte/stockMoyen;
-  document.getElementById('r-rot').textContent=rot.toFixed(2);
-  const rotLbl=document.getElementById('r-rot-lbl');
-  if(rotLbl)rotLbl.textContent=sortiesQte+' sorties / '+stockMoyen+' stk moy.';
-
-  // Retours
-  document.getElementById('r-ret').textContent=gnf(retMnt);
-  const retNb=document.getElementById('r-ret-nb');
-  if(retNb)retNb.textContent=rP.length+' retour'+(rP.length>1?'s':'');
-
-  // Ventes mois courant (KPI fixe)
   const cm=new Date().toISOString().slice(0,7);
-  const caM=D.ventes.filter(v=>(v.date||'').startsWith(cm)).reduce((s,v)=>s+v.montant,0);
-  document.getElementById('r-vnt').textContent=Math.round(caM).toLocaleString('fr-FR').replace(/[\u202F\u00A0]/g, ' ')+' GNF';
+  const caM=(D.ventes||[]).filter(v=>(v.date||'').startsWith(cm)).reduce((s,v)=>s+(Number(v.montant)||0),0);
+  set('r-vnt',gnf(caM));
 
-  // Tableau marges
+  rdRapportDetails(r,pv);
   rdMarges();
+  initRptCharts(r.vP,r.dP,r.mP);
+}
 
-  // Graphiques
-  initRptCharts(vP,dP,mP);
+function xExcelRapport(){
+  const {from,to}=getRptDates();
+  const r=calcPeriode(from,to);const pr=rptPrev(from,to),pv=calcPeriode(pr.from,pr.to);
+  const wb=XLSX.utils.book_new();
+  const cell=(ws,addr,f,v)=>{ws[addr]={t:'n',f,v};};
+
+  // Résumé : lignes dérivées en formules Excel (colonnes B = période, C = période précédente)
+  const rows=[
+    ['Indicateur','Période','Période préc.'],
+    ['CA brut',r.caBrut,pv.caBrut],
+    ['Remboursements (retours traités)',-r.retMnt,-pv.retMnt],
+    ['CA net',0,0],
+    ['Coût des marchandises vendues',-r.coutVentes,-pv.coutVentes],
+    ['Marge brute',0,0],
+    ['Taux de marge (% du CA net)',0,0],
+    ['Charges (hors achats de stock)',-r.chargesTotal,-pv.chargesTotal],
+    ['Résultat net',0,0],
+    [],
+    ['Mémo : achats de stock (trésorerie)',r.achatsStock,pv.achatsStock],
+    ['Mémo : pertes et casse (valeur)',r.pertes,pv.pertes],
+    ['Valeur du stock actuelle',r.valeurStock,''],
+    ['Nombre de ventes',r.nbVentes,pv.nbVentes],
+    ['Panier moyen',Math.round(r.panier),Math.round(pv.panier)],
+    ['Rotation (coût ventes ÷ valeur stock)',+r.rotation.toFixed(2),+pv.rotation.toFixed(2)]
+  ];
+  const ws1=XLSX.utils.aoa_to_sheet(rows);
+  [['B',r],['C',pv]].forEach(([c,d])=>{
+    cell(ws1,c+'4',`${c}2+${c}3`,d.caNet);
+    cell(ws1,c+'6',`${c}4+${c}5`,d.margeBrute);
+    cell(ws1,c+'7',`IFERROR(${c}6/${c}4,0)`,d.tauxMarge/100);
+    cell(ws1,c+'9',`${c}6+${c}8`,d.resultatNet);
+  });
+  ws1['!cols']=[{wch:40},{wch:18},{wch:18}];
+  XLSX.utils.book_append_sheet(wb,ws1,'Résumé');
+
+  // Marges produits : formules sur chaque ligne
+  const prods=D.produits||[];
+  const mRows=[['Code','Produit','Prix achat','Prix vente','Bénéf./u','Marge %','Stock','Valeur stock']];
+  prods.forEach((p,i)=>{
+    const n=i+2,achat=Number(p.achat)||0,vente=Number(p.vente)||0,stock=Number(p.stock)||0;
+    mRows.push([p.code,p.designation,achat,vente,0,0,stock,0]);
+  });
+  const ws2=XLSX.utils.aoa_to_sheet(mRows);
+  prods.forEach((p,i)=>{
+    const n=i+2,achat=Number(p.achat)||0,vente=Number(p.vente)||0,stock=Number(p.stock)||0;
+    cell(ws2,'E'+n,`D${n}-C${n}`,vente-achat);
+    cell(ws2,'F'+n,`IFERROR(E${n}/D${n},0)`,vente?(vente-achat)/vente:0);
+    cell(ws2,'H'+n,`G${n}*C${n}`,stock*achat);
+  });
+  ws2['!cols']=[{wch:12},{wch:34},{wch:12},{wch:12},{wch:12},{wch:10},{wch:10},{wch:14}];
+  XLSX.utils.book_append_sheet(wb,ws2,'Marges Produits');
+
+  // Top produits de la période
+  const tRows=[['Produit','Qté vendue','CA','Coût','Marge GNF','Taux de marge']];
+  r.topMarge.forEach((o,i)=>tRows.push([o.nom,o.qte,o.ca,o.cout,o.ca-o.cout,0]));
+  const ws3=XLSX.utils.aoa_to_sheet(tRows);
+  r.topMarge.forEach((o,i)=>{const n=i+2;cell(ws3,'E'+n,`C${n}-D${n}`,o.ca-o.cout);cell(ws3,'F'+n,`IFERROR(E${n}/C${n},0)`,o.ca?(o.ca-o.cout)/o.ca:0);});
+  ws3['!cols']=[{wch:34},{wch:12},{wch:14},{wch:14},{wch:14},{wch:14}];
+  XLSX.utils.book_append_sheet(wb,ws3,'Top marges');
+
+  // Ventes de la période
+  const cli=id=>(D.clients||[]).find(c=>String(c.id)===String(id))?.nom||'Comptoir';
+  const vRows=r.vP.map(v=>({Numéro:v.num,Date:v.date,Client:cli(v.client_id),Paiement:v.paiement,Montant:Number(v.montant)||0,Remise:Number(v.remise)||0,Acompte:Number(v.acompte)||0,Caissier:v.user||''}));
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(vRows.length?vRows:[{Info:'Aucune vente'}]),'Ventes période');
+
+  // Charges de la période (hors achats de stock, affichés en mémo dans le résumé)
+  const dRows=r.dP.map(d=>({Date:d.date,Libellé:d.libelle,Catégorie:d.categorie,Montant:Number(d.montant)||0}));
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(dRows.length?dRows:[{Info:'Aucune dépense'}]),'Charges période');
+
+  // Créances clients
+  const cRows=r.debiteurs.map(c=>({Client:c.nom,Téléphone:c.tel||'',Dette:Number(c.dette)||0}));
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(cRows.length?cRows:[{Info:'Aucune créance'}]),'Créances clients');
+
+  XLSX.writeFile(wb,`HABATECH_Rapport_${from}_${to}.xlsx`);
+  toast('Export rapport téléchargé','success');
 }
 
 function rdMarges(){
@@ -4501,7 +4956,7 @@ function initRptCharts(vP,dP,mP){
       const labels=days.map(m=>shortM[parseInt(m.slice(5))-1]+' '+m.slice(2,4));
       RC.rpt=new Chart(c2,{type:'bar',data:{labels,
         datasets:[{label:'CA',data:caByM,backgroundColor:'rgba(16,185,129,.7)',borderRadius:4},
-                  {label:'Dépenses',data:dpByM,backgroundColor:'rgba(239,68,68,.6)',borderRadius:4}]},
+                  {label:'Charges',data:dpByM,backgroundColor:'rgba(239,68,68,.6)',borderRadius:4}]},
         options:{...go,plugins:{legend:{display:true,labels:{color:'#94A3B8',font:{size:11}}}},scales:{x:{ticks:{color:'#64748B'},grid:{color:'rgba(255,255,255,.04)'}},y:{beginAtZero:true,ticks:{color:'#64748B',callback:v=>Number(v).toLocaleString('fr-FR').replace(/[\u202F\u00A0]/g, ' ')},grid:{color:'rgba(255,255,255,.04)'}}}}});
     } else {
       // Grouper par jour
@@ -4512,7 +4967,7 @@ function initRptCharts(vP,dP,mP){
       const labels=days.map(d=>d.slice(5));
       RC.rpt=new Chart(c2,{type:'line',data:{labels,
         datasets:[{label:'CA',data:caByD,borderColor:'#10B981',backgroundColor:'rgba(16,185,129,.15)',fill:true,tension:.3,pointRadius:3},
-                  {label:'Dépenses',data:dpByD,borderColor:'#EF4444',backgroundColor:'rgba(239,68,68,.1)',fill:true,tension:.3,pointRadius:3}]},
+                  {label:'Charges',data:dpByD,borderColor:'#EF4444',backgroundColor:'rgba(239,68,68,.1)',fill:true,tension:.3,pointRadius:3}]},
         options:{...go,plugins:{legend:{display:true,labels:{color:'#94A3B8',font:{size:11}}}},scales:{x:{ticks:{color:'#64748B',maxRotation:45},grid:{color:'rgba(255,255,255,.04)'}},y:{beginAtZero:true,ticks:{color:'#64748B',callback:v=>Number(v).toLocaleString('fr-FR').replace(/[\u202F\u00A0]/g, ' ')},grid:{color:'rgba(255,255,255,.04)'}}}}});
     }
   }
@@ -4541,26 +4996,124 @@ function initRptCharts(vP,dP,mP){
   }
 }
 
-function xExcelRapport(){
+function xPDFPeriode(){
+  if(!window.jspdf?.jsPDF){toast('Le module PDF est indisponible. Vérifiez votre connexion puis réessayez.','error');return;}
   const {from,to}=getRptDates();
-  const inP=(dateStr)=>{const d=(dateStr||'').slice(0,10);return d>=from&&d<=to;};
-  const vP=D.ventes.filter(v=>inP(v.date));
-  const dP=D.depenses.filter(d=>inP(d.date));
-  const wb=XLSX.utils.book_new();
-  // Onglet résumé
-  const caP=vP.reduce((s,v)=>s+v.montant,0);
-  const depP=dP.reduce((s,d)=>s+d.montant,0);
-  const resData=[{Indicateur:'Période',Valeur:`${from} → ${to}`},{Indicateur:'CA total',Valeur:caP},{Indicateur:'Dépenses',Valeur:depP},{Indicateur:'Bénéfice net',Valeur:caP-depP},{Indicateur:'Nombre de ventes',Valeur:vP.length}];
-  XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(resData),'Résumé');
-  // Onglet marges
-  const margeData=D.produits.map(p=>({Code:p.code,Produit:p.designation,'Px Achat':p.achat,'Px Vente':p.vente,'Marge GNF':p.vente-p.achat,'Marge %':p.achat?Math.round((p.vente-p.achat)/p.achat*100):0,Stock:p.stock,'Valeur Stock':p.stock*p.achat}));
-  XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(margeData),'Marges Produits');
-  // Onglet ventes période
-  XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(vP.map(v=>({Numéro:v.num,Date:v.date,Articles:v.articles,Montant:v.montant,Paiement:v.paiement}))),'Ventes période');
-  // Onglet dépenses période
-  XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(dP.map(d=>({Date:d.date,Libellé:d.libelle,Catégorie:d.categorie,Montant:d.montant}))),'Dépenses période');
-  XLSX.writeFile(wb,`HABATECH_Rapport_${from}_${to}.xlsx`);
-  toast('Export rapport téléchargé','success');
+  const r=calcPeriode(from,to);const pr=rptPrev(from,to),pv=calcPeriode(pr.from,pr.to);
+  const {jsPDF}=window.jspdf,doc=new jsPDF({unit:'mm',format:'a4'});
+  const navy=[8,55,105],gold=[255,190,0],pale=[244,248,252],red=[185,28,28],green=[21,128,61],grey=[100,116,139];
+  const left=14,right=196,W=right-left;
+  const num=n=>Math.round(Number(n)||0).toLocaleString('fr-FR').replace(/[  ]/g,' ');
+  const money=n=>num(n)+' GNF';
+  const safe=t=>String(t??'—').replace(/[\r\n]+/g,' ').trim();
+  const fit=(txt,maxW)=>{let t=safe(txt);while(t.length>1&&doc.getTextWidth(t)>maxW)t=t.slice(0,-2)+'…';return t;};
+  const evo=(a,b)=>{if(!b)return a?'nouv.':'—';const p=(a-b)/Math.abs(b)*100;return (p>=0?'+':'')+p.toFixed(0)+' %';};
+  const evoCol=(a,b)=>!b?grey:(a>=b?green:red);
+  const today=new Date().toLocaleDateString('fr-FR');
+  const fmtP=d=>{const [y,m,j]=String(d).split('-');return j&&m&&y?`${j}/${m}/${y}`:d;};
+
+  const drawHeader=()=>{
+    doc.setFillColor(...navy);doc.rect(0,0,210,30,'F');doc.setFillColor(...gold);doc.rect(0,30,210,1.6,'F');
+    doc.setTextColor(255,255,255);doc.setFont('helvetica','bold');doc.setFontSize(15);doc.text("ETS N'GUILLA & FRÈRES",left,12);
+    doc.setFont('helvetica','normal');doc.setFontSize(9);doc.text('Rapport de période',left,19);
+    doc.setTextColor(...gold);doc.setFont('helvetica','bold');doc.setFontSize(9.5);doc.text(`Du ${fmtP(from)} au ${fmtP(to)}`,right,12,{align:'right'});
+    doc.setTextColor(255,255,255);doc.setFont('helvetica','normal');doc.setFontSize(8);doc.text(`Comparé à la période du ${fmtP(pr.from)} au ${fmtP(pr.to)}`,right,19,{align:'right'});
+    doc.setFontSize(7.5);doc.text(`Édité le ${today}`,right,25,{align:'right'});
+  };
+  drawHeader();
+  let y=40;
+  const ensure=h=>{if(y+h>272){doc.addPage();drawHeader();y=40;}};
+  const section=t=>{ensure(16);doc.setFillColor(...navy);doc.rect(left,y,W,7,'F');doc.setTextColor(255,255,255);doc.setFont('helvetica','bold');doc.setFontSize(9);doc.text(t,left+3,y+4.9);y+=10;};
+
+  const table=(head,rows,wIn)=>{
+    const rh=6.4;const tot=wIn.reduce((x,y)=>x+y,0);const w=wIn.map(x=>x*W/tot);
+    const headRow=()=>{ensure(rh*3);doc.setFillColor(...navy);doc.rect(left,y,W,rh,'F');doc.setFont('helvetica','bold');doc.setFontSize(7.5);doc.setTextColor(255,255,255);
+      let x=left;head.forEach((h,i)=>{doc.text(String(h),i===0?x+2:x+w[i]-2,y+4.4,{align:i===0?'left':'right'});x+=w[i];});y+=rh;};
+    headRow();
+    rows.forEach((row,ri)=>{
+      if(y+rh>272){doc.addPage();drawHeader();y=40;headRow();}
+      if(ri%2===0){doc.setFillColor(...pale);doc.rect(left,y,W,rh,'F');}
+      doc.setDrawColor(215,224,235);doc.setLineWidth(.15);doc.line(left,y+rh,right,y+rh);
+      doc.setFont('helvetica',row.bold?'bold':'normal');doc.setFontSize(8);
+      let x=left;row.c.forEach((c,i)=>{
+        const col=(row.col&&row.col[i])||navy;
+        doc.setTextColor(...col);
+        const txt=i===0?fit(c,w[0]-4):safe(c);
+        doc.text(txt,i===0?x+2:x+w[i]-2,y+4.4,{align:i===0?'left':'right'});x+=w[i];});
+      y+=rh;
+    });
+    y+=4;
+  };
+
+  // Indicateurs clés
+  const kpis=[
+    ['CA net',money(r.caNet),`${evo(r.caNet,pv.caNet)} vs préc.`,evoCol(r.caNet,pv.caNet)],
+    ['Marge brute',money(r.margeBrute),`Taux ${Math.round(r.tauxMarge)} % · ${evo(r.margeBrute,pv.margeBrute)}`,evoCol(r.margeBrute,pv.margeBrute)],
+    ['Charges',money(r.chargesTotal),'hors achats de stock',grey],
+    ['Résultat net',money(r.resultatNet),`${evo(r.resultatNet,pv.resultatNet)} vs préc.`,r.resultatNet>=0?green:red]
+  ];
+  const kw=(W-9)/4;
+  ensure(26);
+  kpis.forEach((k,i)=>{
+    const x=left+i*(kw+3);
+    doc.setFillColor(...pale);doc.setDrawColor(210,223,236);doc.roundedRect(x,y,kw,24,2,2,'FD');
+    doc.setFillColor(...gold);doc.rect(x,y,1.6,24,'F');
+    doc.setTextColor(...grey);doc.setFont('helvetica','bold');doc.setFontSize(7);doc.text(k[0].toUpperCase(),x+4,y+5.5);
+    doc.setTextColor(...navy);doc.setFontSize(11.5);doc.text(fit(k[1],kw-7),x+4,y+13.5);
+    doc.setFont('helvetica','normal');doc.setFontSize(6.8);doc.setTextColor(...k[3]);doc.text(fit(k[2],kw-7),x+4,y+19.5);
+  });
+  y+=30;
+
+  section('COMPTE DE RÉSULTAT SIMPLIFIÉ');
+  const cw=[96,30,28,30];
+  table(['Libellé','Période','Préc.','Évol.'],[
+    {c:['CA brut (ventes)',num(r.caBrut),num(pv.caBrut),evo(r.caBrut,pv.caBrut)]},
+    {c:['− Remboursements (retours traités)',num(-r.retMnt),num(-pv.retMnt),'—']},
+    {c:['= Chiffre d’affaires net',num(r.caNet),num(pv.caNet),evo(r.caNet,pv.caNet)],bold:true},
+    {c:['− Coût des marchandises vendues',num(-r.coutVentes),num(-pv.coutVentes),'—']},
+    {c:['= Marge brute',num(r.margeBrute),num(pv.margeBrute),evo(r.margeBrute,pv.margeBrute)],bold:true,col:[null,(r.margeBrute>=0?green:red),null,evoCol(r.margeBrute,pv.margeBrute)]},
+    {c:['Taux de marge (% CA net)',Math.round(r.tauxMarge)+' %',Math.round(pv.tauxMarge)+' %','—']},
+    {c:['− Charges (hors achats de stock)',num(-r.chargesTotal),num(-pv.chargesTotal),'—']},
+    {c:['= Résultat net',num(r.resultatNet),num(pv.resultatNet),evo(r.resultatNet,pv.resultatNet)],bold:true,col:[null,(r.resultatNet>=0?green:red),null,evoCol(r.resultatNet,pv.resultatNet)]},
+    {c:['Mémo : achats de stock (trésorerie)',num(r.achatsStock),num(pv.achatsStock),evo(r.achatsStock,pv.achatsStock)]},
+    {c:['Mémo : pertes et casse (valeur)',num(r.pertes),num(pv.pertes),evo(r.pertes,pv.pertes)]}
+  ].map(x=>({...x,c:x.c})),cw);
+
+  section('CHARGES PAR CATÉGORIE');
+  const chRows=Object.entries(r.chargesCat).sort((a,b)=>b[1]-a[1]).map(([k,v])=>({c:[(typeof DP_CAT_LBL!=='undefined'&&DP_CAT_LBL[k])||k,num(v),r.chargesTotal?Math.round(v/r.chargesTotal*100)+' %':'0 %']}));
+  table(['Catégorie','Montant','Part'],chRows.length?chRows:[{c:['Aucune charge','0','—']}],[110,40,36]);
+
+  section('PAIEMENTS ET CAISSIERS');
+  const payRows=Object.entries(r.parPaiement).sort((a,b)=>b[1]-a[1]).map(([k,v])=>({c:[k,num(v),r.caBrut?Math.round(v/r.caBrut*100)+' %':'0 %']}));
+  table(['Mode de paiement','Montant','Part'],payRows.length?payRows:[{c:['Aucune vente','0','—']}],[110,40,36]);
+  const caRows=Object.entries(r.parCaissier).sort((a,b)=>b[1].montant-a[1].montant).map(([k,v])=>({c:[k,String(v.n),num(v.montant)]}));
+  table(['Caissier','Ventes','Montant'],caRows.length?caRows:[{c:['Aucune vente','0','0']}],[110,40,36]);
+
+  section('CRÉANCES CLIENTS');
+  ensure(12);doc.setFont('helvetica','normal');doc.setFontSize(8.5);doc.setTextColor(...navy);
+  doc.text(`Total des dettes : ${money(r.totalDettes)}   ·   Débiteurs : ${r.debiteurs.length}   ·   Ventes à crédit sur la période : ${money(r.creditPeriode)}`,left+2,y+3);y+=8;
+  table(['Client','Téléphone','Dette'],r.debiteurs.slice(0,10).map(c=>({c:[c.nom,c.tel||'—',num(c.dette)]})),[110,40,36]);
+
+  section('TOP 10 PRODUITS — MARGE EN GNF');
+  table(['Produit','Qté','CA','Marge GNF','Taux'],r.topMarge.map(o=>({c:[o.nom,String(o.qte),num(o.ca),num(o.marge),(o.ca?Math.round(o.marge/o.ca*100):0)+' %'],col:[null,null,null,(o.marge>=0?green:red),null]})),[86,18,30,30,24]);
+  if(!r.topMarge.length){doc.setFont('helvetica','normal');doc.setFontSize(8);doc.setTextColor(...grey);doc.text('Aucune vente sur la période.',left+2,y);y+=6;}
+
+  section('ÉTAT DU STOCK');
+  ensure(12);doc.setFont('helvetica','normal');doc.setFontSize(8.5);doc.setTextColor(...navy);
+  doc.text(`Valeur du stock actuelle : ${money(r.valeurStock)}   ·   Rotation : ${r.rotation.toFixed(2)}   ·   Ruptures : ${r.ruptures}   ·   Sous minimum : ${r.sousMin}   ·   Sans vente sur la période : ${r.sansVente}`,left+2,y+3);y+=8;
+
+  // Pied de page sur chaque page
+  const n=doc.internal.getNumberOfPages();
+  for(let i=1;i<=n;i++){
+    doc.setPage(i);
+    doc.setFillColor(...navy);doc.rect(0,287,210,10,'F');doc.setFillColor(...gold);doc.rect(0,287,210,0.8,'F');
+    doc.setTextColor(255,255,255);doc.setFont('helvetica','normal');doc.setFontSize(7);
+    doc.text("ETS N'GUILLA & FRÈRES  |  Rapport de période  |  Document interne",105,293,{align:'center'});
+    doc.text(`Page ${i}/${n}`,right,293,{align:'right'});
+  }
+  doc.save(`Rapport_periode_${from}_${to}.pdf`);
+  toast('Rapport de période PDF généré','success');
+  if(typeof logAction==='function')logAction('CREATE','Rapport période PDF : '+from+' → '+to);
 }
 
 function openM(id){document.getElementById(id).classList.add('open');}
@@ -4797,11 +5350,8 @@ document.addEventListener('DOMContentLoaded',()=>{
       </div>
     </div>
 
-    <!-- Config Firebase / Firestore optionnelle -->
-    <div style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--r-sm);padding:14px;margin-bottom:4px">
-      <div style="font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.7px;margin-bottom:10px">🔥 Configuration Firebase / Firestore (optionnelle)</div>
-      <div class="fgrp" style="margin-bottom:0"><label>Configuration Firebase — JSON</label><textarea id="prod-firebase-json" rows="5" placeholder='{"apiKey":"...","authDomain":"...","projectId":"...","appId":"..."}' style="font-size:12px;padding:8px 10px"></textarea></div>
-    </div>
+    <!-- La configuration Firebase est conservée telle quelle : elle se gère dans Administration > Espace technique -->
+    <div style="font-size:11.5px;color:var(--text3);background:var(--bg3);border:1px solid var(--border);border-radius:var(--r-sm);padding:10px 12px;margin-bottom:4px">🔐 La configuration Firebase ne figure pas dans cet écran. Elle reste enregistrée et se modifie dans Administration › Espace technique.</div>
 
     <!-- Confirmation par saisie -->
     <div style="margin-top:14px">
@@ -5530,6 +6080,7 @@ window.exportBackup=function(){
   try{
     var tables={};Object.keys(TBL).forEach(function(t){tables[t]=D[t]||[];});
     var p={app:'ETS-NGUILLA',v:1,date:new Date().toISOString(),mode:ACCESS_MODE,tables:tables,outbox:OUT};
+    try{if(window.SMSC)p.sms=SMSC.exportData();}catch(e){}
     if(ACCESS_MODE!=='cloud'){try{p.local_users=JSON.parse(localStorage.getItem('local_users')||'[]');}catch(e){}}
     var blob=new Blob([JSON.stringify(p)],{type:'application/json'});
     var a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='ETS-NGUILLA-sauvegarde-'+stamp()+'.json';
@@ -5552,6 +6103,7 @@ window.restoreBackup=function(input){
     var msg='Restaurer la sauvegarde du '+String(p.date||'?').slice(0,16).replace('T',' ')+' ?\n\n'+resume+'\n\nLes données actuelles seront REMPLACÉES.'+(ACCESS_MODE==='cloud'?'\nMode Cloud : les écarts seront aussi envoyés à Firestore.':'')+'\nExportez d’abord une sauvegarde si besoin.';
     if(!confirm(msg))return;
     names.forEach(function(t){D[t]=p.tables[t];try{sv(TBL[t],t);}catch(e){}});
+    try{if(p.sms&&window.SMSC)SMSC.importData(p.sms);}catch(e){}
     if(ACCESS_MODE!=='cloud'&&Array.isArray(p.local_users)){try{localStorage.setItem('local_users',JSON.stringify(p.local_users));}catch(e){}}
     try{recalcEtats();rdAll();computeAlerts();updateKPIs();}catch(e){}
     try{logAction('UPDATE','Restauration sauvegarde '+(p.date||''));}catch(e){}
@@ -5874,6 +6426,53 @@ body:not(.light-mode) #bottom-nav{background:linear-gradient(180deg,color-mix(in
 .bnav-fab:active{transform:translateY(-10px) scale(.92)!important}
 body.light-mode .bnav-fab{box-shadow:0 10px 24px var(--blue-glow),0 0 0 5px #fff,0 0 0 6px var(--border)!important}
 @media(prefers-reduced-motion:reduce){#sidebar,#main,#sidebar *,.bnav-item,.bnav-fab{animation:none!important;transition:none!important}}
+/* ═══ V22 — Réorganisation mobile : aucun élément flottant ne masque le contenu ═══ */
+@media (max-width:768px){
+  :root{--dock-h:62px;--dock-gap:8px;}
+  /* Zone basse : barre de navigation (62 px) + une seule rangée au-dessus (pastille + assistant) */
+  .content{padding-bottom:calc(var(--dock-h) + 56px + env(safe-area-inset-bottom,0px))!important;}
+  #local-badge{position:fixed!important;top:auto!important;left:10px!important;right:auto!important;
+    bottom:calc(var(--dock-h) + var(--dock-gap) + env(safe-area-inset-bottom,0px))!important;
+    z-index:140!important;max-width:calc(100vw - 74px);padding:4px 10px!important;font-size:10px!important;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;box-shadow:0 2px 8px rgba(0,0,0,.35)!important;opacity:.97;}
+  #ai-fab{position:fixed!important;width:42px!important;height:42px!important;right:10px!important;
+    bottom:calc(var(--dock-h) + var(--dock-gap) + env(safe-area-inset-bottom,0px))!important;font-size:18px!important;z-index:140!important;}
+  /* Notifications : en haut, sous la barre, jamais sur la barre de navigation */
+  #toasts{top:calc(60px + env(safe-area-inset-top,0px))!important;bottom:auto!important;left:10px!important;right:10px!important;align-items:stretch!important;gap:6px!important;}
+  #toasts .toast{font-size:12.5px!important;padding:9px 12px!important;box-shadow:0 8px 20px rgba(0,0,0,.35)!important;}
+  #timeout-warn{top:calc(60px + env(safe-area-inset-top,0px))!important;bottom:auto!important;left:10px!important;right:10px!important;transform:none!important;text-align:center;}
+  #quick-links-panel{top:58px!important;left:8px!important;right:8px!important;width:auto!important;max-height:calc(100vh - 128px)!important;}
+  #bottom-nav{height:var(--dock-h);}
+
+  /* Barre topbar : une ligne, titre tronqué proprement */
+  .topbar{gap:6px!important;padding:0 10px!important;}
+  #page-title{min-width:0;flex:1 1 auto;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  #mode-pill{font-size:10px!important;padding:3px 7px!important;white-space:nowrap;}
+
+  /* Barres de recherche et filtres : grille de 2 colonnes au lieu d'une pile de boutons */
+  .search-bar{display:grid!important;grid-template-columns:1fr 1fr!important;gap:8px!important;margin-bottom:12px!important;}
+  .search-bar>input,.search-bar>select{grid-column:1 / -1!important;max-width:none!important;width:100%!important;min-width:0;}
+  .search-bar>.btn{width:100%!important;justify-content:center;font-size:12px!important;padding:9px 6px!important;white-space:normal!important;line-height:1.2;min-width:0;}
+  .search-bar>.btn-primary{grid-column:1 / -1!important;}
+
+  /* Indicateurs : valeurs sur une ligne */
+  .kpi{min-width:0;}
+  .kpi>div{min-width:0;}
+  .kpi-val{font-size:clamp(14px,4.2vw,18px)!important;white-space:normal;word-break:normal;overflow-wrap:normal;line-height:1.2;max-width:100%;}
+  .kpi-label{white-space:normal;}
+
+  /* Tableaux : défilement horizontal propre, colonnes lisibles */
+  .tw,.table-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;}
+  .tw table,.table-wrap table{min-width:max-content;}
+
+  /* Photos produits : hauteur contenue */
+  .mcard-product-photo{height:140px!important;}
+}
+@media (max-width:380px){
+  .search-bar{grid-template-columns:1fr!important;}
+  .search-bar>.btn{grid-column:1 / -1;}
+  .kpi-val{font-size:15px!important;}
+}
 </style>
 <script id="ets-v16d-menus-js">
 (function(){try{
@@ -5944,5 +6543,6 @@ SB.addEventListener('touchmove',function(e){if(done||!SB.classList.contains('ope
 document.addEventListener('click',function(e){var t=e.target.closest&&e.target.closest('.nav-item,.bnav-item,.bnav-fab');if(t&&navigator.vibrate){try{navigator.vibrate(8)}catch(x){}}},true);
 }catch(err){console.warn('menus v16d',err)}})();
 </script>
+<script src="./sms-clients.js"></script>
 </body>
 </html>

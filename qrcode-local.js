@@ -1257,4 +1257,11 @@ module.exports = QRBitBuffer;
 };
 const C={}; function norm(p){let a=[];p.split("/").forEach(x=>{if(!x||x===".")return;if(x==="..")a.pop();else a.push(x)});let s=a.join("/");return s.endsWith(".js")?s:s+".js";} function load(id){id=norm(id);if(C[id])return C[id].exports;if(!M[id])throw Error("QR module missing: "+id);let m={exports:{}};C[id]=m;M[id](p=>load(norm(id.slice(0,id.lastIndexOf("/")+1)+p)),m,m.exports);return m.exports;}
 
-const Core=load("index.js"), Levels=load("QRErrorCorrectLevel.js"); window.QRCode={toCanvas:async function(canvas,text,opts){opts=opts||{};const level=Levels[(opts.errorCorrectionLevel||"M").toUpperCase()]??Levels.M;const q=new Core(-1,level);q.addData(String(text));q.make();const n=q.getModuleCount(),margin=opts.margin??2,size=opts.width||canvas.width||240,cell=size/(n+margin*2),ctx=canvas.getContext("2d");canvas.width=size;canvas.height=size;ctx.fillStyle=(opts.color&&opts.color.light)||"#fff";ctx.fillRect(0,0,size,size);ctx.fillStyle=(opts.color&&opts.color.dark)||"#000";for(let y=0;y<n;y++)for(let x=0;x<n;x++)if(q.modules[y][x]){const x0=Math.round((x+margin)*cell),y0=Math.round((y+margin)*cell),x1=Math.round((x+margin+1)*cell),y1=Math.round((y+margin+1)*cell);ctx.fillRect(x0,y0,x1-x0,y1-y0)}return canvas;}};})();
+const Core=load("index.js"), Levels=load("QRErrorCorrectLevel.js"); window.QRCode=(function(){
+function utf8(t){try{return unescape(encodeURIComponent(String(t)))}catch(e){return String(t)}}
+function build(text,opts){opts=opts||{};const level=Levels[(opts.errorCorrectionLevel||"M").toUpperCase()]??Levels.M;const q=new Core(-1,level);q.addData(utf8(text));q.make();return q;}
+function paint(q,canvas,opts){opts=opts||{};const n=q.getModuleCount(),margin=opts.margin??2,size=opts.width||canvas.width||240,cell=size/(n+margin*2),ctx=canvas.getContext("2d");canvas.width=size;canvas.height=size;ctx.fillStyle=(opts.color&&opts.color.light)||"#fff";ctx.fillRect(0,0,size,size);ctx.fillStyle=(opts.color&&opts.color.dark)||"#000";for(let y=0;y<n;y++)for(let x=0;x<n;x++)if(q.modules[y][x]){const x0=Math.round((x+margin)*cell),y0=Math.round((y+margin)*cell),x1=Math.round((x+margin+1)*cell),y1=Math.round((y+margin+1)*cell);ctx.fillRect(x0,y0,x1-x0,y1-y0)}return canvas;}
+return {
+toCanvas:async function(canvas,text,opts){return paint(build(text,opts),canvas,opts);},
+toDataURL:async function(text,opts){const c=document.createElement("canvas");paint(build(text,opts),c,opts);return c.toDataURL("image/png");}
+};})();})();

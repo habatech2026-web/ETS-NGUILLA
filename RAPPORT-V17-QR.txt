@@ -1,0 +1,23 @@
+ETS N'GUILLA & FRÈRES — V17 (correctif QR local) — rapport
+
+BUG CORRIGÉ
+- La facture PDF appelait QRCode.toDataURL(), absent de qrcode-local.js (seul toCanvas existait). Résultat : le QR « SCANNER POUR VÉRIFIER » n'était jamais ajouté au PDF (simple console.warn).
+  -> qrcode-local.js : ajout de QRCode.toDataURL(texte, options) (PNG data URI, hors ligne).
+- Accents/caractères non latins : le texte était encodé caractère par caractère (charCodeAt), ce qui corrompait les caractères > 255 (ex. noms de produits). -> Encodage UTF-8 avant génération (toCanvas et toDataURL).
+
+TESTS (Node + canvas, décodage OpenCV)
+- toDataURL (facture, niveau M) : décodé à l'identique.
+- toCanvas (étiquette produit, niveau H) : décodé à l'identique.
+- Texte accentué « Café Été Ñ » : décodé correctement.
+- Syntaxe : qrcode-local.js et sw.js OK.
+- Limite connue : capacité max ~1 Ko en niveau H ; au-delà, erreur « code length overflow » (les QR actuels font < 150 octets).
+
+CACHE PWA
+- sw.js : ets-nguilla-v17-qr-datauri (les clients récupèrent le nouveau qrcode-local.js).
+
+NON FAIT
+- SRI : les 6 scripts CDN (Firebase gstatic, Chart.js, jsPDF, SheetJS) n'ont pas d'attribut integrity. Impossible ici (CDN non joignables). À faire sur votre poste, avec Internet : python3 sri.py index.html. Si le SRI est appliqué, refaire après tout changement de version.
+- Test de la facture PDF complète dans un vrai navigateur (jsPDF) non effectué.
+
+DÉPLOIEMENT
+- Pousser qrcode-local.js et sw.js (index.html inchangé).

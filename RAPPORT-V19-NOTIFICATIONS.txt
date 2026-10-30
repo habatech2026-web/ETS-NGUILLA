@@ -1,0 +1,32 @@
+ETS N'GUILLA & FRÈRES — V19 — Notifications clients : SMS + WhatsApp + e-mail
+
+PRINCIPE (inchangé : aucun serveur, aucune clé API, aucun abonnement)
+- SMS : application Messages du téléphone (lien sms:).
+- WhatsApp : lien wa.me (WhatsApp ou WhatsApp Web sur ordinateur).
+- E-mail : application Mail du téléphone (mailto:) ; sur ordinateur, Gmail web s'ouvre dans un nouvel onglet.
+- Dans tous les cas la personne appuie sur « Envoyer ». L'historique indique « préparé », jamais « envoyé/livré ».
+- Envoi totalement automatique (sans toucher au téléphone / à la messagerie) : passerelle payante + petit serveur (SMS Orange/Twilio, WhatsApp Business API, service e-mail). Non inclus.
+
+NOUVEAUTÉS V19
+- Fiche client : champ E-mail, « Canal préféré » (SMS / WhatsApp / E-mail), case « Accepte les notifications » (remplace « SMS »). L'e-mail s'affiche sous le téléphone dans la liste.
+- Fenêtre « Notifier le client » : téléphone + e-mail vérifiés en direct, objet d'e-mail, 4 boutons (SMS, WhatsApp, E-mail, Copier) ; le canal préféré du client est mis en avant (sinon le premier joignable).
+- Accents : retirés uniquement pour les SMS (option) ; WhatsApp et e-mail gardent le texte tel quel.
+- Coordonnées corrigées dans la fenêtre : case « Enregistrer sur la fiche client » (téléphone et/ou e-mail).
+- Propositions après vente / paiement : fonctionnent maintenant dès qu'il y a un téléphone OU un e-mail valide.
+- Relances : clients joignables par téléphone ou e-mail ; compte des clients sans coordonnées valides.
+- Réglages : un objet d'e-mail modifiable par type de message (variables {client} {montant} {dette} {num} {date} {entreprise}).
+- Historique : icônes 📱 💬 ✉️ 📋, objet conservé au renvoi (↻). Sauvegarde JSON inchangée (historique + réglages inclus).
+
+CORRECTIFS
+- Adresse e-mail saisie avec un espace au début : était jugée vide (corrigé avant livraison).
+- (V18) « Nouveau client » n'écrase plus le client précédemment modifié.
+
+TESTS
+- 21 contrôles V19 (e-mail, Gmail/mailto, WhatsApp avec accents, SMS sans accents, canal préféré, enregistrement des coordonnées, relances par e-mail seul, offre automatique, historique, objets) + 32 contrôles V18 rejoués : tous OK.
+- 6 scripts inline : syntaxe OK ; 0 id dupliqué.
+- NON testé sur téléphone réel ni avec de vrais comptes WhatsApp/Gmail. Tester avec votre propre numéro/e-mail avant usage client.
+- Les anciens clients n'ont pas d'e-mail : à renseigner dans leur fiche (canal SMS par défaut).
+
+DÉPLOIEMENT
+- Pousser index.html, sms-clients.js (nom conservé), sw.js (cache : ets-nguilla-v19-notifications).
+- SRI des CDN toujours non appliqué (python3 sri.py index.html, avec Internet).
