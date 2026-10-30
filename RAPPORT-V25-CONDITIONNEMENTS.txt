@@ -1,0 +1,48 @@
+ETS N'GUILLA & FRÈRES — V25 — Conditionnements paramétrables (casier, carton, boîte…)
+
+PRINCIPE
+- Le stock reste TOUJOURS en unités (bouteille, boîte, sachet…). Rien ne change dans les calculs de stock, marges, retours, alertes ni dans la synchronisation (incréments de stock inchangés).
+- Un produit peut avoir 0, 1 ou plusieurs conditionnements : p.cond = [{nom:'Casier', qte:24}, {nom:'Carton', qte:12}].
+- Les anciens produits n'ont aucun conditionnement : leur comportement est identique à avant.
+
+FICHE PRODUIT
+- Nouveau bloc « Conditionnements » : nom + nombre d'unités (entier ≥ 2), boutons rapides Casier 24 / Carton 12 / Boîte 48. Refus des doublons et des valeurs invalides.
+- « Unité de stock » = l'unité de base. Le stock initial affiche sa conversion en direct (ex. 53 → « 2 casiers + 5 bouteilles »).
+
+ENTRÉE / SORTIE DE STOCK
+- Menu « Unité / casier / carton » à côté de la quantité ; conversion affichée avant validation (3 casiers = 72 bouteilles).
+- Le prix saisi est « par casier » (ou par unité) ; il est enregistré par unité.
+- Le mouvement garde la quantité en unités + un libellé (« 3 casiers ») visible dans l'historique.
+- Correctif au passage : une sortie/perte supérieure au stock ne laisse plus de mouvement fantôme dans l'historique.
+
+VENTE (formulaire) ET POS
+- Vente : choix unité / casier / carton à côté de la quantité ; lignes fusionnées en unités ; contrôle du stock dès l'ajout.
+- POS : puces « + Casier », « + Carton » sur chaque produit, et « + / − Casier » dans le panier. Plafonné au stock.
+- Prix inchangé : prix par unité × nombre d'unités (pas de tarif spécial par casier dans cette version).
+- La ligne de vente garde un libellé figé (« 2 casiers + 3 bouteilles ») utilisé sur ticket POS, facturette et facture PDF.
+
+AFFICHAGE
+- Liste produits (tableau et cartes mobiles), POS, alertes de stock, suggestions de réapprovisionnement, marges, étiquette, inventaire (comptage toujours en unités), export Excel (colonne « Stock conditionné ») et PDF.
+
+TESTS
+- 6 scripts inline : syntaxe OK.
+- Test automatisé (jsdom) : 33 contrôles OK — fiche produit, validations, entrée de 3 casiers (+72), 0,5 casier (+12), 0,51 refusé, sortie > stock refusée, vente 2 casiers + 3 bouteilles (stock −51, montant exact), POS (plafond au stock, snapshot), affichages, ticket.
+- NON testé sur téléphone réel, ni avec Firebase en ligne, ni en impression réelle (facture PDF : seul le libellé du produit est modifié).
+
+LIMITES
+- Pas de prix spécial par conditionnement ; commandes fournisseurs toujours en unités ; retours en unités (le libellé est conservé sur la vente d'origine).
+- Si un conditionnement est modifié plus tard, les anciennes ventes/mouvements gardent leur libellé d'origine ; seul le stock actuel est recalculé.
+
+DÉPLOIEMENT
+- Remplacer index.html et sw.js (cache : ets-nguilla-v25-conditionnements). Sauvegarder les données avant.
+
+AJOUT — Bouton « ➕ Nouvelle » catégorie (fiche produit)
+- À côté de la liste Catégorie : mini-formulaire (emoji, nom, périssable) ; la catégorie est créée, enregistrée, puis sélectionnée automatiquement. Un nom déjà existant (casse/accents ignorés) sélectionne l'existante au lieu de la dupliquer.
+- Test automatisé : 9 contrôles OK (+ les 33 précédents).
+
+AJOUT — Impression partout (🖨️)
+- Bouton « 🖨️ Imprimer » dans la barre du haut (toutes les pages) + bouton « Imprimer cette page » en tête de chaque page + bouton 🖨️ dans les fenêtres Historique produit et Catégories.
+- Imprime uniquement la page affichée (menus, boutons, filtres masqués), avec en-tête (entreprise, page, date, utilisateur), TOUTES les lignes (la pagination est levée le temps de l'impression), colonne « Actions » retirée, fond blanc économe en encre, A4.
+- Sans fenêtre popup : utilise l'impression du navigateur (sur téléphone : « Enregistrer au format PDF »).
+- Page Administration volontairement exclue (clés Firebase, utilisateurs).
+- Tests automatisés : 18 contrôles OK. NON testé sur imprimante / téléphone réel (aperçu à vérifier).
